@@ -1,5 +1,4 @@
 import type { PaymentAccess } from "./country-meta.ts";
-import { convertToCny, MoneyDecimal } from "./money.ts";
 
 export const decisionNeeds = {
   plus: "AI Plus",
@@ -11,12 +10,18 @@ export type Need = keyof typeof decisionNeeds;
 export type Capacity = "30gb" | "100gb" | "200gb" | "2tb" | "10tb" | "20tb";
 type OfferGroup = Need | Capacity;
 
-export function decisionGroup(sku: string): OfferGroup | undefined {
+export function decisionGroup(
+  sku: string,
+  description = "",
+): OfferGroup | undefined {
   const id = sku.replace(/^(?:com\.google\.(?:gemini|one)|g1\.ios)\./, "");
-  if (/^helium\.[am](?:[._]|$)/.test(id)) return "plus";
+  if (/^helium\.[am](?:[._]|$)/.test(id))
+    return /Google AI Plus.*\b2\s*TB\b/i.test(description) ? undefined : "plus";
   if (/^(?:(?:2tb\.ai|ai\.2tb)\.[am]|5tb\.m)(?:[._]|$)/.test(id)) return "pro";
   if (/^(?:30tb\.ai\.pro|30tb)\.m(?:[._]|$)/.test(id)) return "ultra";
   const storage = /^(30gb|100gb|200gb|2tb|10tb|20tb)\.[am](?:[._]|$)/.exec(id);
+  // Some markets use the same 2 TB SKU ID for a different product.
+  if (/(?:Google AI|含\s*\d+x\s*Ultra)/i.test(description)) return undefined;
   return storage?.[1] as Capacity | undefined;
 }
 
@@ -26,7 +31,7 @@ export const alias = 2;
 export function offerFlags(sku: string, intro: number | null) {
   const promo =
     intro !== null ||
-    /(?:\.acq(?:\.|$)|_ip(?:[_.]|$)|\.ip[_.]|_eft(?:[_.]|$))/.test(sku);
+    /(?:\.acq(?:[._]|$)|_ip(?:[_.]|$)|\.ip[_.]|_eft(?:[_.]|$))/.test(sku);
   const alternate = /\.(?:5|30)tb\.m(?:[._]|$)/.test(sku);
   return (promo ? acquisition : 0) | (alternate ? alias : 0);
 }
@@ -84,6 +89,7 @@ export type DecisionData = {
   offers: Partial<Record<OfferGroup, DecisionOffer[]>>;
   markets: DecisionMarket[];
   skus: string[];
+  discounts: Partial<Record<number, number>>;
   rates: DecisionRate[];
   usdToCny: number;
   capacities: Capacity[];
@@ -127,6 +133,14 @@ export function sharingSupported(
   );
 }
 
+// The snapshot carries up to 15 significant digits. Keep base-10 amounts
+// exact through the local sum, then convert once before returning a number.
+function decimalParts(value: number) {
+  const [mantissa, power = "0"] = value.toString().split("e");
+  const [integer, fraction = ""] = mantissa.split(".");
+  return [BigInt(integer + fraction), Number(power) - fraction.length] as const;
+}
+
 export function calculateCost(
   offer: DecisionOffer,
   duration: number,
@@ -138,12 +152,24 @@ export function calculateCost(
   const paidPeriods = Math.ceil(Math.max(0, duration - trialMonths) / months);
   const introCount =
     intro !== null && !trialMonths ? Math.min(paidPeriods, periods) : 0;
-  const amount = new MoneyDecimal(intro ?? 0)
-    .times(introCount)
-    .plus(new MoneyDecimal(renewal).times(paidPeriods - introCount));
-  const cny = (local: number) =>
-    convertToCny(local, rate[1], usdToCny).toNumber();
-  const total = convertToCny(amount, rate[1], usdToCny).toNumber();
+  const initial = decimalParts(intro ?? 0);
+  const recurring = decimalParts(renewal);
+  const power = Math.min(initial[1], recurring[1]);
+  const localUnits =
+    initial[0] * 10n ** BigInt(initial[1] - power) * BigInt(introCount) +
+    recurring[0] *
+      10n ** BigInt(recurring[1] - power) *
+      BigInt(paidPeriods - introCount);
+  const [targetUnits, targetPower] = decimalParts(usdToCny);
+  const [marketUnits, marketPower] = decimalParts(rate[1]);
+  // Preserve more significant digits than a JavaScript number can hold.
+  const conversionPower = targetPower - marketPower - 40;
+  const convert = (units: bigint, exponent: number) => {
+    const scaled = (units * targetUnits * 10n ** 40n) / marketUnits;
+    return Number(`${scaled}e${exponent + conversionPower}`);
+  };
+  const cny = (local: number) => convert(...decimalParts(local));
+  const total = convert(localUnits, power);
   const firstLocal = intro ?? renewal;
   const renewalCny = cny(renewal);
   const bills = [
@@ -163,7 +189,7 @@ export function calculateCost(
     .filter(({ count }) => count > 0)
     .map((bill) => ({ ...bill, cny: cny(bill.local) }));
   return {
-    local: amount.toNumber(),
+    local: Number(`${localUnits}e${power}`),
     total,
     monthly: total / duration,
     perPerson: people > 1 ? total / people : null,
@@ -184,6 +210,7 @@ export function calculateCost(
 export type DecisionPlan = ReturnType<typeof calculateCost> & {
   market: DecisionMarket;
   sku: string;
+  discount?: number;
   rate: DecisionRate;
   offer: DecisionOffer;
 };
@@ -232,15 +259,20 @@ export function decide(data: DecisionData, params: DecisionParams) {
       ...calculateCost(offer, m, people, rate, data.usdToCny),
       market,
       sku: data.skus[skuId],
+      discount: data.discounts[skuId],
       rate,
       offer,
     };
     const currentRegular = regular.get(market.code);
-    if (!flags && (!currentRegular || comparePlans(plan, currentRegular) < 0))
+    if (
+      !flags &&
+      offer[4] === null &&
+      (!currentRegular || comparePlans(plan, currentRegular) < 0)
+    )
       regular.set(market.code, plan);
     if (
       (easy && market.access !== "easy") ||
-      (elig === "existing" && flags & acquisition)
+      (elig === "existing" && (offer[4] !== null || flags !== 0))
     )
       continue;
     const current = bestByMarket.get(market.code);

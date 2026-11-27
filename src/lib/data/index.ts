@@ -1,5 +1,11 @@
 import baselineFx from "../../data/fx.json" with { type: "json" };
 import snapshot from "../../data/snapshot.json" with { type: "json" };
+import {
+  decide,
+  decisionDefaults,
+  decisionNeeds,
+  type Need,
+} from "./decision.ts";
 import { buildDecisionData } from "./decision-source.ts";
 import {
   currencyNames,
@@ -56,6 +62,7 @@ export {
   compareTierLeaders,
   productLines,
   quoteLine,
+  quoteTier,
   type RankedQuote,
   summarizeRanking,
   type TierId,
@@ -193,3 +200,10 @@ export { fxProviderUrl } from "./fx.ts";
 export function getQuoteCount(): number {
   return data.quotes.length;
 }
+
+const defaultDecisions = Object.keys(decisionNeeds).map((need) => ({
+  need: need as Need,
+  result: decide(decisionData, { ...decisionDefaults, need: need as Need }),
+}));
+
+export const getDefaultDecisions = () => defaultDecisions;

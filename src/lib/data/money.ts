@@ -3,14 +3,14 @@ import type { Fx } from "./fx.ts";
 import type { LocalChange, LocalQuote, Price, Sku, WithCny } from "./schema.ts";
 import type { PriceView } from "./views.ts";
 
-export const MoneyDecimal = Decimal.clone({ precision: 40 });
+const MoneyDecimal = Decimal.clone({ precision: 40 });
 
 export type PricedQuote = Pick<
   LocalQuote | LocalChange,
   "skuId" | "currency" | "description" | "intro" | "introPeriods" | "renewal"
 >;
 
-export function convertToCny(
+function convertToCny(
   amount: Decimal.Value,
   unitsPerUsd: number,
   usdToCny: number,

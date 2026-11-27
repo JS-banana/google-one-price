@@ -31,11 +31,14 @@ export function buildDecisionData(source: Snapshot, fx: Fx): DecisionData {
     ([currency, { unitsPerUsd, date }]) => [currency, unitsPerUsd, date],
   );
   const rateIds = new Map(rates.map(([currency], id) => [currency, id]));
-  const skuIndex = new Map(source.skus.map((sku, id) => [sku.id, { sku, id }]));
+  const skuIndex = new Map(source.skus.map((sku) => [sku.id, sku]));
   const offers: DecisionData["offers"] = {};
+  const skus: string[] = [];
+  const discounts: DecisionData["discounts"] = {};
+  const usedSkus = new Map<string, number>();
   for (const quote of source.quotes) {
     if (quote.status !== "active") continue;
-    const group = decisionGroup(quote.skuId);
+    const group = decisionGroup(quote.skuId, quote.description);
     if (!group) continue;
     const intro = quote.intro?.local ?? null;
     if (intro !== null && intro > quote.renewal.local) continue;
@@ -46,16 +49,21 @@ export function buildDecisionData(source: Snapshot, fx: Fx): DecisionData {
       throw new Error(
         `Incomplete decision data for ${quote.countryCode} ${quote.skuId}`,
       );
-    const { months, trialMonths, introPeriods } = billingTerms(
-      quote,
-      entry.sku,
-    );
+    const { months, trialMonths, introPeriods } = billingTerms(quote, entry);
     if (intro !== null && intro > 0 && !introPeriods) continue;
+    let skuId = usedSkus.get(quote.skuId);
+    if (skuId === undefined) {
+      skuId = skus.length;
+      usedSkus.set(quote.skuId, skuId);
+      skus.push(quote.skuId);
+      const discount = entry.offer?.discountPercent;
+      if (discount != null) discounts[skuId] = discount;
+    }
     const groupOffers = offers[group] ?? [];
     offers[group] = groupOffers;
     groupOffers.push([
       market,
-      entry.id,
+      skuId,
       rate,
       months,
       intro,
@@ -78,7 +86,8 @@ export function buildDecisionData(source: Snapshot, fx: Fx): DecisionData {
     markets,
     rates,
     family,
-    skus: source.skus.map(({ id }) => id),
+    skus,
+    discounts,
     capacities: capacityOrder.filter((cap) => offers[cap]?.length),
     usdToCny: fx.rates.CNY.unitsPerUsd,
   };

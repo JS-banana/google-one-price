@@ -214,7 +214,19 @@ describe("candidate policy and ranking", () => {
     ).toBeLessThan(0);
   });
 
-  it("excludes introductory and acquisition-only SKUs for previous subscribers", () => {
+  it("excludes AI bundles from pure storage even when the SKU ID is shared", () => {
+    expect(
+      decisionGroup("com.google.one.2tb.m", "Google AI Plus (2 TB) · 月付"),
+    ).toBeUndefined();
+    expect(decisionGroup("com.google.one.2tb.m", "2 TB · 月付")).toBe("2tb");
+    expect(
+      decisionGroup("com.google.one.20tb.m", "20 TB 存储 (含 5x Ultra) · 月付"),
+    ).toBeUndefined();
+    expect(data.offers["2tb"]).toHaveLength(119);
+    expect(data.capacities).not.toContain("20tb");
+  });
+
+  it("keeps only regular plans for previous subscribers", () => {
     const seeded = structuredClone(data);
     seeded.skus.push("g1.ios.2tb.ai.m.acq");
     seeded.offers.pro?.push([
@@ -230,10 +242,11 @@ describe("candidate policy and ranking", () => {
     ]);
     const existing = decide(seeded, { ...decisionDefaults, elig: "existing" });
     expect(
-      existing.ranked.every(
-        ({ offer }) => offer[4] === null && !(offer[8] & acquisition),
-      ),
+      existing.ranked.every(({ offer }) => offer[4] === null && offer[8] === 0),
     ).toBe(true);
+    expect(
+      existing.ranked.find(({ market }) => market.code === "TUR")?.sku,
+    ).toBe("com.google.gemini.2tb.ai.a");
     expect(existing.first).toBeUndefined();
   });
 
