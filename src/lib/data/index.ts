@@ -1,5 +1,6 @@
 import baselineFx from "../../data/fx.json" with { type: "json" };
 import snapshot from "../../data/snapshot.json" with { type: "json" };
+import { buildDecisionData } from "./decision-source.ts";
 import {
   currencyNames,
   type ExchangeRate,
@@ -75,6 +76,8 @@ const fx = loadFx(
   process.env.FX_LIVE === "1" ? livePath : undefined,
 );
 const source = snapshot as Snapshot;
+const decisionData = buildDecisionData(source, fx);
+export const getDecisionData = () => decisionData;
 const pricing = createPricing(source.skus, fx);
 const data = {
   ...source,

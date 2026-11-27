@@ -3,14 +3,14 @@ import type { Fx } from "./fx.ts";
 import type { LocalChange, LocalQuote, Price, Sku, WithCny } from "./schema.ts";
 import type { PriceView } from "./views.ts";
 
-const MoneyDecimal = Decimal.clone({ precision: 40 });
+export const MoneyDecimal = Decimal.clone({ precision: 40 });
 
 export type PricedQuote = Pick<
   LocalQuote | LocalChange,
   "skuId" | "currency" | "description" | "intro" | "introPeriods" | "renewal"
 >;
 
-function convertToCny(
+export function convertToCny(
   amount: Decimal.Value,
   unitsPerUsd: number,
   usdToCny: number,
@@ -45,6 +45,14 @@ export function introPrice<T>(quote: { intro: T | null; renewal: T }): T {
 export function encodedOfferMonths(sku: Sku | undefined): number | null {
   const duration = /^P(\d+)(M|Y)$/.exec(sku?.offer?.encodedDuration ?? "");
   return duration ? Number(duration[1]) * (duration[2] === "Y" ? 12 : 1) : null;
+}
+
+export function billingTerms(quote: PricedQuote, sku: Sku | undefined) {
+  const months = billingMonths(sku?.billingPeriod, quote.description);
+  const trialMonths = quote.intro?.local === 0 ? encodedOfferMonths(sku) : 0;
+  if (trialMonths === null)
+    throw new Error(`Missing trial duration for ${quote.skuId}`);
+  return { months, trialMonths, introPeriods: quote.introPeriods ?? 0 };
 }
 
 function priceAmounts(
@@ -126,18 +134,16 @@ export function createPricing(skuList: readonly Sku[], fx: Fx) {
     return rate.unitsPerUsd;
   };
   const priceInputs = (quote: PricedQuote) => {
-    const sku = skus.get(quote.skuId);
-    const months = billingMonths(sku?.billingPeriod, quote.description);
-    const trialMonths = quote.intro?.local === 0 ? encodedOfferMonths(sku) : 0;
-    if (trialMonths === null)
-      throw new Error(`Missing trial duration for ${quote.skuId}`);
-    const introMonths = trialMonths || (quote.introPeriods ?? 0) * months;
+    const { months, trialMonths, introPeriods } = billingTerms(
+      quote,
+      skus.get(quote.skuId),
+    );
     return {
       ...priceAmounts(
         quote.renewal.local,
         quote.intro?.local ?? null,
         months,
-        introMonths,
+        trialMonths || introPeriods * months,
       ),
       unitsPerUsd: rateFor(quote.currency),
     };
