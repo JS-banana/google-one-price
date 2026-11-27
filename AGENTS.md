@@ -8,7 +8,7 @@
 - `scripts/` 存放工作簿读取、字段规范化、地区映射、SKU 解码和对账代码。
 - `src/data/snapshot.json` 是提交到 Git 的规范化快照。
 - `src/lib/data/` 存放 Zod schema、金额换算、档位、矩阵、页面数据接口和测试。
-- `src/pages/` 是 Astro 静态页面入口，`src/styles/` 接入 Tailwind CSS v4。矩阵使用 Preact island。
+- `src/pages/` 是 Astro 静态页面入口，`src/styles/` 接入 Tailwind CSS v4。首页决策器使用 Preact island，矩阵使用原生脚本。
 - `docs/data-source.md` 说明表结构、口径、异常和刷新流程。
 
 ## 命令

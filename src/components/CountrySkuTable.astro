@@ -1,10 +1,12 @@
 ---
 import {
+  getSkus,
+  groupCountryQuotes,
   hasHistoricalPriceAnomaly,
   isGlobalTierLowest,
-  priceViews,
   type Quote,
   quoteLine,
+  quoteTier,
   tierGroups,
 } from "../lib/data";
 import { formatCny, formatLocal, formatSkuDescription } from "../lib/format";
@@ -15,10 +17,13 @@ interface Props {
 }
 const { quotes } = Astro.props;
 const histories = quotes.filter(({ status }) => status === "historical").length;
-const entries = quotes.map((quote) => ({
-  quote,
-  display: priceDisplay(quote),
-}));
+const entries = groupCountryQuotes(quotes, getSkus()).map(
+  ([quote, ...aliases]) => ({
+    quote,
+    aliases,
+    display: priceDisplay(quote),
+  }),
+);
 const groups = tierGroups.map((group) => ({
   ...group,
   rows: entries
@@ -31,7 +36,6 @@ const groups = tierGroups.map((group) => ({
   id="country-skus"
   data-filter-line="all"
   data-show-history="no"
-  data-sorted-view="year"
   aria-label="SKU 报价"
 >
   <div class="sku-controls">
@@ -75,21 +79,19 @@ const groups = tierGroups.map((group) => ({
               {name}
             </th>
           </tr>
-          {rows.map(({ quote, display }) => {
+          {rows.map(({ quote, aliases, display }) => {
             const { intro, currency, renewal } = quote;
             const unit = display.annual ? "/年" : "";
             const isHistorical = quote.status === "historical";
-            const lowest = priceViews.filter((view) =>
-              isGlobalTierLowest(quote, view, display.prices[view]),
+            const members = [quote, ...aliases];
+            const ids = [...new Set(members.map(({ skuId }) => skuId))];
+            const sources = [...new Set(members.map(({ source }) => source))];
+            const lowest = members.find((member) =>
+              isGlobalTierLowest(member, "year", display.prices.year),
             );
+            const tier = lowest && quoteTier(lowest);
             return (
-              <tr
-                data-sku-row={quote.status}
-                data-intro={display.prices.intro}
-                data-year={display.prices.year}
-                data-renew={display.prices.renew}
-                title={quote.source}
-              >
+              <tr data-sku-row={quote.status} title={sources.join(" · ")}>
                 <th scope="row" class="sku-name">
                   <p>{formatSkuDescription(quote.description)}</p>
                   <button
@@ -101,6 +103,26 @@ const groups = tierGroups.map((group) => ({
                     {quote.skuId}
                     <span role="status" data-copy-status></span>
                   </button>
+                  {ids.length > 1 && (
+                    <details class="sku-aliases small">
+                      <summary>+{ids.length - 1} 个同价 SKU</summary>
+                      <ul>
+                        {ids.map((id) => (
+                          <li>
+                            <button
+                              class="copy-sku mono small"
+                              type="button"
+                              title="复制 SKU"
+                              data-copy={id}
+                            >
+                              {id}
+                              <span role="status" data-copy-status></span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                 </th>
                 <td class="num sku-amount">
                   <span class="mobile-price-label">首期（折月）</span>
@@ -123,7 +145,13 @@ const groups = tierGroups.map((group) => ({
                 </td>
                 <td class="num sku-amount">
                   <span class="mobile-price-label">续费（折月）</span>
-                  <span>{display.renewCny}/月</span>
+                  <span
+                    class:list={[
+                      { "sku-trial-renewal": display.trial && display.badge },
+                    ]}
+                  >
+                    {display.renewCny}/月
+                  </span>
                   <span class="original muted small">
                     {formatLocal(renewal.local, currency)}
                     {unit}
@@ -142,22 +170,16 @@ const groups = tierGroups.map((group) => ({
                   {isHistorical ? (
                     <span class="sku-status-badges">
                       <span class="badge historical-badge">历史快照</span>
-                      {hasHistoricalPriceAnomaly(quote) && (
+                      {members.some(hasHistoricalPriceAnomaly) && (
                         <span class="badge warn">源数据异常</span>
                       )}
                     </span>
+                  ) : tier ? (
+                    <a class="badge best" href={`/tiers/${tier}`}>
+                      全球最低
+                    </a>
                   ) : (
-                    priceViews.map((view) => (
-                      <span
-                        class:list={[
-                          "view-content",
-                          lowest.includes(view) ? "badge best" : "muted",
-                        ]}
-                        data-price-view={view}
-                      >
-                        {lowest.includes(view) ? "全球最低" : "·"}
-                      </span>
-                    ))
+                    <span class="muted">·</span>
                   )}
                 </td>
               </tr>
@@ -207,6 +229,17 @@ const groups = tierGroups.map((group) => ({
 .sku-name {
   text-align: left;
   font-weight: 500;
+}
+.sku-aliases {
+  color: var(--text-secondary);
+}
+.sku-name .copy-sku {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-align: left;
+}
+.sku-trial-renewal {
+  color: var(--warn);
 }
 .sku-amount > :is(span, small) {
   display: block;

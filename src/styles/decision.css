@@ -1,0 +1,384 @@
+.decision-inputs {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 12px;
+}
+.decision-field {
+  min-width: 0;
+}
+.decision-field legend,
+.decision-select {
+  font-size: 12px;
+  font-weight: 500;
+}
+.decision-field legend {
+  margin-bottom: 4px;
+}
+.decision-segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  background: var(--bg-subtle);
+  border-radius: 4px;
+  padding: 2px;
+}
+.decision-segments .control {
+  padding-inline: 8px;
+  min-height: 30px;
+  background: transparent;
+  border-color: transparent;
+}
+.decision-segments .control:has(:checked) {
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+}
+.decision-segments .control:has(:focus-visible) {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 1px;
+}
+.decision-select {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.decision-select select {
+  min-height: 34px;
+  min-width: 0;
+  max-width: 100%;
+}
+.decision-easy {
+  min-height: 34px;
+}
+.decision-section {
+  margin-top: 22px;
+}
+.decision-heading {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+.decision-aging {
+  padding: 8px 10px;
+  border: 1px solid var(--border-default);
+  border-left: 2px solid var(--caution);
+  background: var(--bg-subtle);
+  color: var(--caution-ink);
+  margin-bottom: 8px;
+}
+.decision-baseline,
+.focus-note {
+  margin-bottom: 8px;
+}
+.decision-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+.decision-card {
+  min-width: 0;
+  border-top: 2px solid var(--border-strong);
+}
+.decision-best,
+.decision-steady {
+  border-top-color: var(--best);
+}
+.decision-first {
+  border-top-color: var(--warn);
+}
+.decision-card-body {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 12px;
+}
+.decision-card header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.card-region,
+.decision-market {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.decision-market {
+  flex-wrap: nowrap;
+}
+.card-region a {
+  font-weight: 600;
+}
+.access-label {
+  display: inline-block;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  padding-inline: 4px;
+  border-radius: 2px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.access-easy {
+  color: var(--best);
+  background: var(--best-bg);
+}
+.decision-primary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-weight: 600;
+}
+.decision-primary button {
+  font-size: 24px;
+  line-height: 30px;
+}
+.decision-best .decision-primary,
+.decision-saving {
+  color: var(--best);
+}
+.decision-price {
+  text-align: inherit;
+  color: inherit;
+  text-decoration: underline dotted var(--border-strong);
+  text-underline-offset: 3px;
+}
+.decision-price:hover {
+  text-decoration-color: currentColor;
+}
+.decision-warn {
+  color: var(--warn);
+}
+.decision-caution {
+  color: var(--caution-ink);
+}
+.decision-renewal-short {
+  display: none;
+}
+.steady-gap {
+  font-weight: 600;
+}
+.decision-timeline {
+  margin-top: 2px;
+  padding: 8px;
+  border-radius: 4px;
+  background: var(--bg-subtle);
+}
+.decision-timeline h4 {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.decision-timeline ol {
+  display: grid;
+  gap: 4px;
+}
+.decision-timeline li {
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) 2fr;
+  gap: 4px 8px;
+}
+.decision-timeline small {
+  display: block;
+}
+.decision-timeline p {
+  margin-top: 5px;
+}
+.decision-month {
+  color: var(--text-secondary);
+}
+.decision-fallback {
+  color: var(--caution-ink);
+}
+.decision-check {
+  border-top: 1px solid var(--border-default);
+  padding-top: 6px;
+}
+.decision-check summary {
+  font-weight: 600;
+}
+.decision-check ul,
+.decision-notes {
+  list-style: disc;
+  padding-left: 22px;
+  color: var(--text-secondary);
+}
+.decision-check li,
+.decision-notes li + li {
+  margin-top: 4px;
+}
+.decision-notes {
+  padding-block: 10px;
+  padding-right: 12px;
+}
+.compact-card {
+  display: none;
+}
+.decision-rank th[scope="row"] {
+  text-align: left;
+  font-weight: 500;
+}
+.decision-rank td > small {
+  display: block;
+  font-size: 11px;
+}
+.decision-offer-mark {
+  margin-inline-start: 0.2em;
+  color: var(--caution-ink);
+  font-weight: 700;
+}
+.decision-offer-note {
+  margin-top: 6px;
+}
+.decision-rank td:nth-last-child(1),
+.decision-rank .decision-rank-renew {
+  white-space: nowrap;
+}
+.decision-rank .rank-focused {
+  background: var(--best-bg);
+}
+.decision-rank .rank-focused .decision-rank-index {
+  color: var(--best);
+  font-weight: 600;
+}
+.decision-rank .rank-focused td:first-child {
+  box-shadow: inset 2px 0 var(--best);
+}
+.decision-more,
+.decision-share {
+  margin-top: 10px;
+}
+.decision-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+@media (max-width: 767px) {
+  .decision-inputs {
+    gap: 8px 10px;
+    padding: 8px;
+  }
+  .decision-field:has(input[name="need"]) {
+    width: 100%;
+  }
+  .decision-segments .control {
+    padding-inline: 6px;
+  }
+  .decision-cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .decision-card-body {
+    padding: 9px 10px;
+  }
+  .decision-primary button {
+    font-size: 20px;
+    line-height: 26px;
+  }
+  .compact-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 40px;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  .compact-market,
+  .compact-amount {
+    display: grid;
+    gap: 2px;
+  }
+  .compact-market {
+    justify-items: start;
+  }
+  .compact-amount {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .compact-gap {
+    color: var(--text-secondary);
+  }
+  .compact-card + .decision-card-body {
+    display: none;
+  }
+  .expanded .compact-card + .decision-card-body {
+    display: grid;
+    border-top: 1px solid var(--border-default);
+  }
+  .expanded .decision-card-body h3 {
+    display: none;
+  }
+  .decision-rank,
+  .decision-rank tbody {
+    display: block;
+  }
+  .decision-rank thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .decision-rank tbody tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "rank market delta total" "plan plan renew profile";
+    align-items: baseline;
+    gap: 2px 6px;
+    border-bottom: 1px solid var(--border-default);
+    padding: 6px 8px;
+  }
+  .decision-rank tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .decision-rank tbody :is(th, td) {
+    padding: 0;
+    border: 0;
+  }
+  .decision-rank-index {
+    grid-area: rank;
+    align-self: start;
+  }
+  .decision-rank-market {
+    grid-area: market;
+  }
+  .decision-rank-total {
+    grid-area: total;
+    white-space: nowrap;
+  }
+  .decision-rank-plan {
+    grid-area: plan;
+    font-size: 12px;
+  }
+  .decision-rank-plan-name {
+    white-space: nowrap;
+  }
+  .decision-rank-renew {
+    grid-area: renew;
+    text-align: left;
+    font-size: 11px;
+  }
+  .decision-rank :is(.decision-percent, .decision-renewal-full) {
+    display: none;
+  }
+  .decision-rank .decision-renewal-short {
+    display: inline;
+  }
+  .decision-rank-gap {
+    grid-area: delta;
+    font-size: 11px;
+  }
+  .decision-rank-link {
+    grid-area: profile;
+    text-align: right;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,38 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../components/Layout.astro";
+
+const entries = (await getCollection("guide")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<Layout
+  title="跨区订阅避坑指南"
+  description="了解 App Store 跨区订阅的 Apple 账户、付款方式、首期资格、续费取消与 Google 家庭共享规则。"
+>
+  <div class="page-heading"><h1>避坑指南</h1></div>
+  <ul class="panel articles">
+    {entries.map(({ id, data }) => (
+      <li>
+        <h2>
+          <a href={`/guide/${id}`}>{data.title}</a>
+        </h2>
+        <p class="secondary">{data.summary}</p>
+        <p class="small muted">
+          复核 <time datetime={data.reviewedAt}>{data.reviewedAt}</time>
+        </p>
+      </li>
+    ))}
+  </ul>
+</Layout>
+<style>
+.articles li {
+  padding: 12px 16px;
+  display: grid;
+  gap: 4px;
+}
+.articles li + li {
+  border-top: 1px solid var(--border-default);
+}
+</style>

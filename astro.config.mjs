@@ -7,10 +7,15 @@ export default defineConfig({
   site: "https://googleone.laifuyou.com",
   output: "static",
   trailingSlash: "never",
+  redirects: {
+    "/changes": "/data#changes",
+    "/rates": "/data#fx",
+  },
   integrations: [
     preact(),
     sitemap({
-      filter: (page) => !/^\/404(?:\.html|\/)?$/.test(new URL(page).pathname),
+      filter: (page) =>
+        !/^\/(?:404|changes|rates)(?:\.html|\/)?$/.test(new URL(page).pathname),
     }),
   ],
   vite: {

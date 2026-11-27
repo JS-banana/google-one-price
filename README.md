@@ -6,10 +6,11 @@ Compare Google One and Gemini subscriptions across 60 iOS App Store markets with
 
 ## Features
 
-- Compare plans by introductory monthly price, first-year monthly average, or renewal monthly price. Rankings use CNY equivalents and show the original currency alongside them.
+- Estimate the cash paid over 3, 12, or 24 months by subscription eligibility, household size, and payment access.
+- Compare matrix tiers by introductory monthly price, first-year monthly average, or renewal monthly price. Rankings use CNY equivalents and show the original currency alongside them.
 - See the introductory price, offer duration, and renewal price together, with warnings for steep renewal increases.
 - Sort the 60-market price matrix by plan, filter by region, and search by market or currency.
-- Browse individual markets for plan prices and historical quotes, and check the change log for recent updates.
+- Browse market profiles for payment options and past quotes. Read guides on account regions, offer eligibility, family sharing, and renewal.
 
 ## Quick start
 
@@ -24,7 +25,7 @@ pnpm build
 
 Run `pnpm dev` to start the development server and `pnpm build` to generate `dist/`. The shell setting keeps Lefthook setup enabled and uses the prebuilt platform binaries supplied by Wrangler's dependencies.
 
-The site uses Astro, TypeScript, Tailwind CSS v4, and an interactive matrix island. Zod validates the normalized snapshot and Vitest runs the tests. Cloudflare Workers serves the static build.
+The site uses Astro, TypeScript, Tailwind CSS v4, and a Preact decision tool on the homepage. Zod validates the normalized snapshot and Vitest runs the tests. Cloudflare Workers serves the static build.
 
 ## Refresh the data
 

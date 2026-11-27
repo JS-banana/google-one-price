@@ -1,150 +1,60 @@
 ---
-import AnswerStrip from "../components/AnswerStrip.astro";
-import ChangeGroups from "../components/ChangeGroups.astro";
+import Decision from "../components/Decision";
 import Layout from "../components/Layout.astro";
-import TierCard from "../components/TierCard.astro";
-import ViewBar from "../components/ViewBar.astro";
 import {
-  getChanges,
-  getCountries,
-  getFreeTrials,
-  getTierRanking,
-  tierGroups,
-  tierIds,
+  getCountryMeta,
+  getDecisionData,
+  getMetadata,
+  getProducts,
 } from "../lib/data";
-import { formatCny } from "../lib/format";
+import type { Need } from "../lib/data/decision";
+import { giftCardLabels, paymentMethods } from "../lib/decision-labels";
 
-const countries = new Map(
-  getCountries().map((country) => [country.code, country]),
-);
-const pro = getTierRanking("ai-pro-monthly", "year")[0];
-const trials = getFreeTrials();
-const title = "Google One / Gemini 全球 iOS 订阅低价速查";
-const description = `比较 ${countries.size} 个国家/地区的 ${tierIds.length} 个 Google One 与 Gemini iOS 档位。Google AI Pro 原价月付最低为 ${countries.get(pro.quote.countryCode)?.nameZh} ${formatCny(pro.price)}/月，含首期优惠与续费对照。`;
+const data = getDecisionData();
+const { pricesObservedAt, fxDate } = getMetadata();
+const products = getProducts();
+const familyHints = Object.fromEntries(
+  Object.entries(products).map(([need, { familySharing }]) => [
+    need,
+    [
+      familySharing.maxAdditionalMembers &&
+        `最多可与 ${familySharing.maxAdditionalMembers} 位符合条件的家庭成员共享。`,
+      familySharing.sharedBenefits?.[0],
+      "成员须与管理员居住在同一国家。",
+    ]
+      .filter(Boolean)
+      .join(" "),
+  ]),
+) as Record<Need, string>;
+const payment = Object.fromEntries(
+  data.markets.map(({ code }) => {
+    const meta = getCountryMeta(code);
+    return [
+      code,
+      meta
+        ? [
+            `${giftCardLabels[meta.giftCard]}。官方付款方式包括 ${paymentMethods(meta)}。${meta.notes ? ` ${meta.notes}` : ""}`,
+            meta.sources[0],
+          ]
+        : ["付款方式尚未确认。", "https://support.apple.com/en-us/111741"],
+    ];
+  }),
+) as Record<string, [string, string]>;
+const extras = {
+  observedAt: pricesObservedAt,
+  fxDate,
+  payment,
+  familyHints,
+  cancel:
+    "在购买时使用的 Apple 账户中，进入「设置 → 姓名 → 订阅」查看续费日期和取消选项。",
+};
 ---
 
-<Layout {title} {description} dataset>
-  <div class="page-heading">
-    <h1>{title}</h1>
-    <p class="page-note small">
-      <span class="mono">{countries.size}</span> 个国家/地区 ·
-      <span class="mono">{tierIds.length}</span> 个比较档位
-    </p>
-  </div>
-  <ViewBar />
-  <AnswerStrip {countries} />
-  {tierGroups.map(({ ids, name }, index) => (
-    <section class="tier-section">
-      <h2 class="section-heading">
-        <span class="mono muted">{String(index + 1).padStart(2, "0")}</span>
-        {name}
-      </h2>
-      <div class="tier-grid">
-        {ids.map((id, column) => (
-          <TierCard {id} {countries} eager={index === 0 && column < 2} />
-        ))}
-      </div>
-    </section>
-  ))}
-  <section class="tier-section">
-    <h2 class="section-heading">
-      <span class="mono muted">05</span> 免费试用一览
-    </h2>
-    <div class="panel">
-      <table class="data-table trial-table">
-        <thead>
-          <tr>
-            <th scope="col">产品</th>
-            <th scope="col">试用时长</th>
-            <th scope="col">提供地区数</th>
-            <th scope="col" class="num">试用后最低续费</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trials.map(({ product, months, countries, lowest }) => (
-            <tr>
-              <th scope="row">{product}</th>
-              <td class="trial-months">
-                <span class="mono">{months.join(" / ")}</span> 个月
-              </td>
-              <td class="trial-regions">
-                <details>
-                  <summary>
-                    <span class="mono">{countries.length}</span> 个地区
-                  </summary>
-                  <ul>
-                    {countries.map(({ code, nameZh }) => (
-                      <li>
-                        <a href={`/countries/${code.toLowerCase()}`}>
-                          {nameZh}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              </td>
-              <td class="num trial-renewal">
-                <a href={`/countries/${lowest.country.code.toLowerCase()}`}>
-                  {lowest.country.nameZh}
-                </a>
-                <span class="mono best-text">{formatCny(lowest.price)}/月</span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </section>
-  <section class="tier-section">
-    <div class="section-heading">
-      <h2>最近变动</h2>
-      <a class="end" href="/changes">全部变动 →</a>
-    </div>
-    <ChangeGroups changes={getChanges()} {countries} limit={5} />
-  </section>
+<Layout
+  title="Google One / Gemini 跨区订阅决策器"
+  description={`比较 ${data.markets.length} 个 App Store 地区的 Google One、Gemini 订阅总成本。按使用时长、首期资格、家庭人数与付款条件查看方案、账单和当地续费。`}
+  dataset
+>
+  <div class="page-heading"><h1>Google One / Gemini 跨区订阅决策器</h1></div>
+  <Decision client:load packed={JSON.stringify(data)} {extras} />
 </Layout>
-<style>
-.tier-section + .tier-section {
-  margin-top: 24px;
-}
-.tier-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.trial-table tbody th {
-  text-align: left;
-}
-.trial-months,
-.trial-regions summary,
-.trial-renewal span {
-  white-space: nowrap;
-}
-.trial-regions summary {
-  cursor: pointer;
-}
-.trial-regions ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 8px;
-  max-width: 20rem;
-  margin-top: 4px;
-  font-size: 12px;
-}
-@media (max-width: 767px) {
-  .trial-table :is(th, td) {
-    padding-inline: 5px;
-  }
-  .trial-renewal span {
-    display: block;
-  }
-  .trial-months {
-    white-space: normal;
-  }
-}
-@media (max-width: 1023px) {
-  .tier-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-</style>

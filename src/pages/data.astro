@@ -1,38 +1,84 @@
 ---
+import ChangeGroups from "../components/ChangeGroups.astro";
 import Layout from "../components/Layout.astro";
 import SearchInput from "../components/SearchInput.astro";
 import {
   cnyPerLocal,
   fxProviderUrl,
+  getChanges,
   getCountries,
   getExchangeRates,
   getMetadata,
-  getTierRanking,
+  summarizeChanges,
 } from "../lib/data";
 import { formatRate, formatShanghaiTime } from "../lib/format";
 
 const rates = getExchangeRates();
 const countries = getCountries();
-const proMarkets = getTierRanking("ai-pro-promo-yearly").length;
-const plusMarkets = getTierRanking("ai-plus-promo-yearly").length;
-const { usdToCny, fxProvider, fxDate, pricesObservedAt } = getMetadata();
-const title = "汇率与价格说明";
-const description = `查看 ${rates.length} 种币种的人民币折算，当前 1 USD = ${formatRate(usdToCny)} CNY。了解 Google One 与 Gemini iOS 首期、首年月均、续费及 USD 计价区的口径。`;
+const changes = getChanges();
+const summary = summarizeChanges(changes);
+const countryMap = new Map(countries.map((country) => [country.code, country]));
+const kinds = [...new Set(changes.map(({ kind }) => kind))];
+const filters = kinds.length > 1 ? ["全部", ...kinds] : kinds;
+const { usdToCny, fxProvider, fxDate, pricesObservedAt, changesCheckedAt } =
+  getMetadata();
+const title = "数据与更新";
+const description = `查看 Google One 与 Gemini iOS 价格观测时间、${summary.count} 条变动记录和 ${rates.length} 种参考汇率，了解订阅总成本、首期价格和续费的计算口径。`;
 ---
 
 <Layout {title} {description}>
-  <div class="page-heading"><h1>汇率与说明</h1></div>
-  <section aria-labelledby="calculation">
-    <h2 class="section-heading" id="calculation">价格口径</h2>
+  <div class="page-heading"><h1>数据与更新</h1></div>
+  <nav class="data-jumps pills" aria-label="数据页目录">
+    <a class="control" href="#freshness">数据时效</a>
+    <a class="control" href="#calculation">计算口径</a>
+    <a class="control" href="#changes">变动记录</a>
+    <a class="control" href="#fx">汇率表</a>
+    <a class="control" href="#terms">免责声明</a>
+  </nav>
+  <section aria-labelledby="freshness">
+    <h2 class="section-heading" id="freshness">数据时效</h2>
+    <dl class="change-summary">
+      <div>
+        <dt>价格观测（北京时间）</dt>
+        <dd>
+          <time datetime={`${pricesObservedAt}+08:00`}
+            >{formatShanghaiTime(pricesObservedAt)}</time
+          >
+        </dd>
+      </div>
+      <div>
+        <dt>变动检查（北京时间）</dt>
+        <dd>
+          <time datetime={`${changesCheckedAt}+08:00`}
+            >{formatShanghaiTime(changesCheckedAt)}</time
+          >
+        </dd>
+      </div>
+      <div>
+        <dt>汇率参考日期</dt>
+        <dd>
+          <time datetime={fxDate}>{fxDate}</time> ·
+          <a href={fxProviderUrl}>{fxProvider}</a>
+        </dd>
+      </div>
+    </dl>
+  </section>
+  <section class="rates-section" aria-labelledby="calculation">
+    <h2 class="section-heading" id="calculation">计算口径</h2>
     <dl class="method-list">
       <div>
         <dt>报价来源与更新</dt>
         <dd>
-          数据来自 iOS App Store
-          商品目录监控，按小时检查。价格观测时间为北京时间{" "}
-          <time datetime={`${pricesObservedAt}+08:00`}
-            >{formatShanghaiTime(pricesObservedAt)}</time
-          >。
+          报价来自 iOS App Store
+          商品目录监控。价格快照与汇率独立更新，各自的参考时间见上方。
+        </dd>
+      </div>
+      <div>
+        <dt>决策器总成本</dt>
+        <dd>
+          按所选月数累计期间实际扣款。月付按期支付，免费试用结束才开始扣款。年付每次扣一整年，即使计划用
+          3 个月。
+          先累计原币，再折算人民币。月均为总额除以计划月数，家庭共享可用时按人数平摊。
         </dd>
       </div>
       <div>
@@ -57,12 +103,14 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
         </dd>
       </div>
       <div>
-        <dt>档位覆盖范围</dt>
+        <dt>比较范围</dt>
         <dd>
-          首页榜单和矩阵比较 20x 大容量、Google AI Pro、Google AI Plus 及 20
-          TB、10 TB 存储的精选档位。AI Pro 和 AI Plus 的年付首年 7.5 折分别覆盖
-          {proMarkets} 和 {plusMarkets} 个市场。年付优惠档位按至少 10
-          个活跃市场的覆盖范围选入。免费试用在首页单独汇总，完整报价见国家页。
+          决策器按产品与资格比较活跃报价，用对比地区的主线常规报价计算差额。
+          <a href="/matrix">全量比价</a
+          >展示精选档位与免费试用，并可切换首期、首年月均和续费口径。完整报价见<a
+            href="/countries"
+            >地区档案</a
+          >。
         </dd>
       </div>
       <div>
@@ -91,6 +139,56 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
         </dd>
       </div>
     </dl>
+  </section>
+  <section class="rates-section" aria-labelledby="changes">
+    <h2 class="section-heading" id="changes">变动记录</h2>
+    <dl class="change-summary">
+      <div>
+        <dt>变动</dt>
+        <dd><span class="mono">{summary.count}</span> 条</dd>
+      </div>
+      <div>
+        <dt>涉及地区</dt>
+        <dd><span class="mono">{summary.countries}</span> 个</dd>
+      </div>
+      <div>
+        <dt>免费试用／首期优惠</dt>
+        <dd class="mono">{summary.trials} / {summary.offers}</dd>
+      </div>
+    </dl>
+    {kinds.length > 1 && (
+      <fieldset class="pills change-filters" aria-label="变动类型">
+        {filters.map((kind, index) => (
+          <label class="control">
+            <input
+              class="sr-only"
+              type="radio"
+              name="change-kind"
+              data-change-kind
+              value={kind}
+              checked={index === 0}
+            />
+            {kind === "新发现地区SKU" ? "新发现地区 SKU" : kind}
+          </label>
+        ))}
+      </fieldset>
+    )}
+    {filters.map((kind, index) => (
+      <div data-kind-panel={kind} hidden={index !== 0}>
+        <ChangeGroups
+          changes={
+            kind === "全部"
+              ? changes
+              : changes.filter((change) => change.kind === kind)
+          }
+          countries={countryMap}
+          linkable={index === 0}
+        />
+      </div>
+    ))}
+    {filters.length === 0 && (
+      <p class="empty-message">本次检查没有变动记录。</p>
+    )}
   </section>
   <section class="rates-section" aria-labelledby="fx">
     <div class="section-heading rates-heading">
@@ -213,6 +311,14 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
   </section>
 </Layout>
 <style>
+.data-jumps {
+  margin-bottom: 14px;
+}
+h2[id],
+#data-license {
+  scroll-margin-top: calc(var(--header-height) + 8px);
+}
+
 .method-list {
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
@@ -306,6 +412,45 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
   .rate-table td,
   .rate-table th {
     font-size: 11px;
+  }
+}
+.change-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+}
+.change-summary > :where(div) {
+  padding: 8px 12px;
+}
+.change-summary > div + div {
+  border-left: 1px solid var(--border-default);
+}
+.change-summary dt {
+  color: var(--text-secondary);
+}
+.change-summary dd {
+  font-weight: 600;
+  margin-top: 2px;
+}
+.change-filters {
+  margin-block: 12px 8px;
+}
+.change-summary + [data-kind-panel] {
+  margin-top: 12px;
+}
+.change-filters .control:has(:focus-visible) {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+@media (max-width: 499px) {
+  .change-summary {
+    grid-template-columns: 1fr;
+  }
+  .change-summary > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--border-default);
   }
 }
 </style>

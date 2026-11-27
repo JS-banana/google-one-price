@@ -1,6 +1,13 @@
 import baselineFx from "../../data/fx.json" with { type: "json" };
 import snapshot from "../../data/snapshot.json" with { type: "json" };
 import {
+  decide,
+  decisionDefaults,
+  decisionNeeds,
+  type Need,
+} from "./decision.ts";
+import { buildDecisionData } from "./decision-source.ts";
+import {
   currencyNames,
   type ExchangeRate,
   fxSchema,
@@ -30,13 +37,11 @@ export {
   getCountryMeta,
   type PaymentAccess,
 } from "./country-meta.ts";
+export { groupCountryQuotes } from "./country-quotes.ts";
 export type { Matrix, MatrixSkuId } from "./matrix.ts";
 export {
   hasHistoricalPriceAnomaly,
-  homeCardNotice,
   isUsdMarket,
-  renewalMultiplier,
-  renewalTrap,
 } from "./offers.ts";
 export {
   getGoogleFamilyGroup,
@@ -52,9 +57,9 @@ export type {
 } from "./schema.ts";
 export { regions } from "./schema.ts";
 export {
-  compareTierLeaders,
   productLines,
   quoteLine,
+  quoteTier,
   type RankedQuote,
   summarizeRanking,
   type TierId,
@@ -75,6 +80,8 @@ const fx = loadFx(
   process.env.FX_LIVE === "1" ? livePath : undefined,
 );
 const source = snapshot as Snapshot;
+const decisionData = buildDecisionData(source, fx);
+export const getDecisionData = () => decisionData;
 const pricing = createPricing(source.skus, fx);
 const data = {
   ...source,
@@ -147,15 +154,6 @@ export function getComparisonMatrix() {
   }));
 }
 
-export function getCountryAdvantages(countryCode: string) {
-  return tierIds.flatMap((id) => {
-    const match = getTierRanking(id, "year")
-      .slice(0, 3)
-      .find(({ quote }) => quote.countryCode === countryCode);
-    return match ? [{ id, ...match }] : [];
-  });
-}
-
 export function isGlobalTierLowest(
   quote: Quote,
   view: PriceView,
@@ -190,3 +188,10 @@ export { fxProviderUrl } from "./fx.ts";
 export function getQuoteCount(): number {
   return data.quotes.length;
 }
+
+const defaultDecisions = Object.keys(decisionNeeds).map((need) => ({
+  need: need as Need,
+  result: decide(decisionData, { ...decisionDefaults, need: need as Need }),
+}));
+
+export const getDefaultDecisions = () => defaultDecisions;

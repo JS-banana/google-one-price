@@ -3,18 +3,18 @@ import { getMetadata } from "../lib/data";
 import { formatShanghaiTime } from "../lib/format";
 
 const nav = [
-  { href: "/", label: "低价速查" },
-  { href: "/matrix", label: "价格矩阵" },
+  { href: "/", label: "方案推荐" },
   { href: "/countries", label: "国家/地区" },
-  { href: "/changes", label: "变动记录" },
-  { href: "/rates", label: "汇率与说明" },
+  { href: "/matrix", label: "全量比价" },
+  { href: "/guide", label: "避坑指南" },
+  { href: "/data", label: "数据与更新" },
 ];
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
 const active = (href: string) =>
   href === path ||
   (href !== "/" && path.startsWith(`${href}/`)) ||
-  (href === "/" && path.startsWith("/tiers/"));
-const { pricesObservedAt, fxDate, fxProvider } = getMetadata();
+  (href === "/matrix" && path.startsWith("/tiers/"));
+const { pricesObservedAt, fxDate } = getMetadata();
 ---
 
 <header class="site-header">
@@ -29,16 +29,15 @@ const { pricesObservedAt, fxDate, fxProvider } = getMetadata();
         </a>
       ))}
     </nav>
-    <a href="/rates" class="header-meta mono small">
-      <span
-        >价格观测时间
-        <time datetime={`${pricesObservedAt}+08:00`}
-          >{formatShanghaiTime(pricesObservedAt, true)}</time
-        ></span
+    <a href="/data" class="header-meta mono small">
+      价格{" "}
+      <time
+        id="price-observation"
+        datetime={`${pricesObservedAt}+08:00`}
+        title={formatShanghaiTime(pricesObservedAt)}
+        >{pricesObservedAt.slice(5, 10)}</time
       >
-      <span
-        >汇率日期 <time datetime={fxDate}>{fxDate}</time> · {fxProvider}</span
-      >
+      {" · 汇率 "}<time datetime={fxDate}>{fxDate.slice(5)}</time>
     </a>
     <details class="mobile-nav">
       <summary aria-label="主导航菜单">
@@ -65,6 +64,28 @@ const { pricesObservedAt, fxDate, fxProvider } = getMetadata();
     </details>
   </div>
 </header>
+<div class="stale-banner" id="stale-prices" hidden>
+  <div class="wrap">
+    价格数据已超过 30 天未更新，仅供参考。
+    <a href="/data#freshness">查看观测时间</a>
+  </div>
+</div>
+<script>
+import { priceFreshness } from "../lib/data/freshness";
+
+const time = document.querySelector<HTMLTimeElement>("#price-observation");
+const banner = document.getElementById("stale-prices");
+if (time && banner) {
+  const refresh = () => {
+    const { days, state } = priceFreshness(time.dateTime);
+    time.textContent =
+      days === 0 ? "今天" : days === 1 ? "昨天" : `${days} 天前`;
+    banner.hidden = state !== "stale";
+  };
+  refresh();
+  window.addEventListener("pageshow", refresh);
+}
+</script>
 <style>
 .site-header {
   position: sticky;
@@ -118,7 +139,6 @@ nav a:where(:hover, [aria-current]) {
   font-weight: 600;
 }
 .header-meta {
-  display: grid;
   margin-inline-start: auto;
   padding: 4px 7px;
   border: 1px solid var(--border-default);
@@ -129,6 +149,12 @@ nav a:where(:hover, [aria-current]) {
 }
 .header-meta:hover {
   color: var(--text-primary);
+}
+.stale-banner {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-bottom: 1px solid var(--warn);
+  padding-block: 8px;
 }
 .mobile-nav {
   display: none;

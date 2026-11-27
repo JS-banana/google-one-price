@@ -8,11 +8,10 @@ import DualPrice from "./DualPrice.astro";
 interface Props {
   changes: readonly Change[];
   countries: ReadonlyMap<string, Country>;
-  limit?: number;
   linkable?: boolean;
 }
-const { changes, countries, limit, linkable = true } = Astro.props;
-const groups = groupChanges(changes).slice(0, limit);
+const { changes, countries, linkable = true } = Astro.props;
+const groups = groupChanges(changes);
 ---
 
 <div class="change-groups panel">
@@ -25,17 +24,6 @@ const groups = groupChanges(changes).slice(0, limit);
     const trial = summary.trials > 0 && (
       <span class="change-trials">（含 {summary.trials} 个免费试用）</span>
     );
-    if (limit !== undefined) {
-      return (
-        <a class="recent-change" href={`/changes#${id}`}>
-          <CountryLabel {country} /> <span class="mono muted">{code}</span>
-          <span class="change-count">
-            · {label}
-            {trial}
-          </span>
-        </a>
-      );
-    }
     return (
       <details id={linkable ? id : undefined}>
         <summary>
@@ -45,6 +33,11 @@ const groups = groupChanges(changes).slice(0, limit);
             {trial}
           </span>
         </summary>
+        <p class="change-country small">
+          <a href={`/countries/${code.toLowerCase()}`}>
+            查看{country.nameZh}订阅档案 →
+          </a>
+        </p>
         <ul>
           {rows.map((quote) => {
             const display = priceDisplay(quote);
@@ -72,27 +65,23 @@ const groups = groupChanges(changes).slice(0, limit);
 </div>
 <style>
 :where(details) + details,
-:where(.recent-change) + .recent-change,
 .change-item {
   border-top: 1px solid var(--border-default);
 }
 details {
   scroll-margin-top: 64px;
 }
-.recent-change {
-  display: block;
-  text-decoration: none;
-}
-summary,
-.recent-change {
+summary {
   padding: 10px 12px;
 }
-summary:hover,
-.recent-change:hover {
+summary:hover {
   background: var(--bg-hover);
 }
 summary .country-label {
   vertical-align: -1px;
+}
+.change-country {
+  padding: 4px 12px 8px;
 }
 .change-count {
   color: var(--text-secondary);

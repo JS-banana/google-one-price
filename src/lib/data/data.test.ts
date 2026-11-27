@@ -5,12 +5,10 @@ import rawSnapshot from "../../data/snapshot.json" with { type: "json" };
 import { fxSchema } from "./fx.ts";
 import {
   cnyPerLocal,
-  compareTierLeaders,
   describePrice,
   getChanges,
   getComparisonMatrix,
   getCountries,
-  getCountryAdvantages,
   getCountryQuotes,
   getFreeTrials,
   getMetadata,
@@ -19,16 +17,14 @@ import {
   getTierRanking,
   getWorkbookMatrix,
   groupChanges,
+  groupCountryQuotes,
   hasHistoricalPriceAnomaly,
-  homeCardNotice,
   isGlobalTierLowest,
   isUsdMarket,
   priceFor,
   priceViews,
   quoteLine,
   relativeToLowest,
-  renewalMultiplier,
-  renewalTrap,
   summarizeRanking,
   tierGroups,
   tierIds,
@@ -36,6 +32,7 @@ import {
 } from "./index.ts";
 import { createPricing, introPrice, toPrice } from "./money.ts";
 import { resolveIntroPeriods } from "./offers.ts";
+import { renewalTrap } from "./renewal.ts";
 import { type Quote, quoteSchema, snapshotSchema } from "./schema.ts";
 import { rankTier } from "./tiers.ts";
 
@@ -306,13 +303,6 @@ describe("price views and offers", () => {
     ).toBe(false);
   });
 
-  it("prefers non-promotional leaders when the comparison price ties", () => {
-    const standard = getTierRanking("ai-plus-monthly", "renew")[0];
-    const promo = getTierRanking("ai-plus-promo-monthly", "renew")[0];
-    expect(standard.price).toBe(promo.price);
-    expect([promo, standard].sort(compareTierLeaders)[0]).toBe(standard);
-  });
-
   it("recognizes all active aliases tied at the global minimum", () => {
     const aliases = getCountryQuotes("TUR").filter(
       (q) => q.skuId.includes(".20tb.m") && q.status === "active",
@@ -320,6 +310,10 @@ describe("price views and offers", () => {
     const lowest = getTierRanking("storage-20tb-monthly")[0].price;
     const tied = aliases.filter((q) => priceFor(q, "year") === lowest);
     expect(tied).toHaveLength(3);
+    const grouped = groupCountryQuotes(getCountryQuotes("TUR"), getSkus());
+    expect(grouped.find((group) => group.includes(tied[0]))).toEqual(
+      expect.arrayContaining(tied),
+    );
     for (const q of tied) {
       expect(isGlobalTierLowest(q, "year", priceFor(q, "year"))).toBe(true);
       expect(
@@ -332,33 +326,75 @@ describe("price views and offers", () => {
     }
   });
 
-  it("classifies price jumps and shows the homepage warning only in intro", () => {
-    const offer = (intro: number | null, renew: number) => ({
-      intro: intro === null ? null : toPrice(intro, 1, 1),
-      renewal: toPrice(renew, 1, 1),
-    });
-    expect(renewalMultiplier(offer(1, 195))).toBe(195);
-    expect(renewalTrap(offer(null, 195))).toBeNull();
-    expect(renewalTrap(offer(2, 1))).toBeNull();
-    expect(renewalTrap(offer(1, 1.19))).toBeNull();
-    expect(renewalTrap(offer(0.1, 0.12))).toEqual({
+  it("classifies price jumps using the original decimal amounts", () => {
+    expect(renewalTrap(null, 195)).toBeNull();
+    expect(renewalTrap(0, 0)).toBeNull();
+    expect(renewalTrap(2, 1)).toBeNull();
+    expect(renewalTrap(1, 1.19)).toBeNull();
+    expect(renewalTrap(0.1, 0.12)).toEqual({
       kind: "multiplier",
       multiplier: 1.2,
       level: "caution",
     });
-    expect(renewalTrap(offer(1, 10))).toEqual({
+    expect(renewalTrap(0.0000001, 0.00000012)?.level).toBe("caution");
+    expect(renewalTrap(1, 9.99)?.level).toBe("caution");
+    expect(renewalTrap(1, 10)).toEqual({
       kind: "multiplier",
       multiplier: 10,
       level: "warn",
     });
-    expect(renewalTrap(offer(0, 195))).toEqual({
+    expect(renewalTrap(0, 195)).toEqual({
       kind: "trial",
       level: "warn",
     });
-    expect(homeCardNotice(offer(1, 195), "intro", 140)).toBe(140);
-    expect(homeCardNotice(offer(0, 195), "intro", 140)).toBe(140);
-    expect(homeCardNotice(offer(1, 195), "year", 140)).toBeNull();
-    expect(homeCardNotice(offer(1, 9.99), "intro", 140)).toBeNull();
+  });
+
+  it("groups only country aliases with matching products, terms and raw prices", () => {
+    const tur = getCountryQuotes("TUR", "active");
+    const promo = tur.find(
+      ({ skuId }) => skuId === "com.google.one.100gb.m.3month_ip.0.49",
+    );
+    if (!promo?.intro) throw new Error("Missing paid offer fixture");
+    const alias = {
+      ...promo,
+      skuId: `${promo.skuId}.iog`,
+      source: "apple_catalog",
+    } as const;
+    const [, billing, terms] = promo.description.split(" · ");
+    const distinct: Quote[] = [
+      { ...promo, description: `200 GB 存储 · ${billing} · ${terms}` },
+      { ...promo, skuId: "com.google.one.100gb.a" },
+      { ...promo, introPeriods: 1 },
+      {
+        ...promo,
+        description: `100 GB 存储 · ${billing} · 首期5折(50% off)×3期`,
+      },
+      { ...promo, intro: { ...promo.intro, local: promo.intro.local + 0.01 } },
+      {
+        ...promo,
+        renewal: { ...promo.renewal, local: promo.renewal.local + 0.01 },
+      },
+      { ...promo, currency: "USD" },
+      { ...promo, countryCode: "USA" },
+      { ...promo, status: "historical" },
+    ];
+    expect(groupCountryQuotes([alias, promo, ...distinct], getSkus())).toEqual([
+      [promo, alias],
+      ...distinct.map((quote) => [quote]),
+    ]);
+  });
+
+  it("keeps identically labeled trials with different SKU durations separate", () => {
+    const trials = getCountryQuotes("TUR", "active").filter(
+      ({ skuId }) =>
+        skuId === "com.google.gemini.2tb.ai.m.1month_eft" ||
+        skuId === "com.google.one.2tb.ai.m.2months_eft",
+    );
+    expect(trials).toHaveLength(2);
+    expect(trials[0].description).toBe(trials[1].description);
+    expect(groupCountryQuotes(trials, getSkus())).toEqual(
+      trials.map((quote) => [quote]),
+    );
   });
 
   it("uses the same ordered tiers and exact ranking in the comparison matrix", () => {
@@ -403,10 +439,6 @@ describe("price views and offers", () => {
     });
     expect(relativeToLowest(15, 10)).toBe(0.5);
     expect(relativeToLowest(10, 0)).toBeNull();
-    expect(getCountryAdvantages(all[0].quote.countryCode)).toContainEqual({
-      id: "ai-pro-monthly",
-      ...all[0],
-    });
   });
 
   it("classifies country SKU groups and aggregates time-tied change rows", () => {

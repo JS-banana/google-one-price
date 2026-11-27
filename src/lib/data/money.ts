@@ -47,6 +47,14 @@ export function encodedOfferMonths(sku: Sku | undefined): number | null {
   return duration ? Number(duration[1]) * (duration[2] === "Y" ? 12 : 1) : null;
 }
 
+export function billingTerms(quote: PricedQuote, sku: Sku | undefined) {
+  const months = billingMonths(sku?.billingPeriod, quote.description);
+  const trialMonths = quote.intro?.local === 0 ? encodedOfferMonths(sku) : 0;
+  if (trialMonths === null)
+    throw new Error(`Missing trial duration for ${quote.skuId}`);
+  return { months, trialMonths, introPeriods: quote.introPeriods ?? 0 };
+}
+
 function priceAmounts(
   renewal: number,
   initial: number | null,
@@ -126,18 +134,16 @@ export function createPricing(skuList: readonly Sku[], fx: Fx) {
     return rate.unitsPerUsd;
   };
   const priceInputs = (quote: PricedQuote) => {
-    const sku = skus.get(quote.skuId);
-    const months = billingMonths(sku?.billingPeriod, quote.description);
-    const trialMonths = quote.intro?.local === 0 ? encodedOfferMonths(sku) : 0;
-    if (trialMonths === null)
-      throw new Error(`Missing trial duration for ${quote.skuId}`);
-    const introMonths = trialMonths || (quote.introPeriods ?? 0) * months;
+    const { months, trialMonths, introPeriods } = billingTerms(
+      quote,
+      skus.get(quote.skuId),
+    );
     return {
       ...priceAmounts(
         quote.renewal.local,
         quote.intro?.local ?? null,
         months,
-        introMonths,
+        trialMonths || introPeriods * months,
       ),
       unitsPerUsd: rateFor(quote.currency),
     };

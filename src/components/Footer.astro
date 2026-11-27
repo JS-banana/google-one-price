@@ -21,16 +21,16 @@ const { pricesObservedAt, fxDate, fxProvider, usdToCny } = getMetadata();
       监控抓取，人民币为按参考汇率折算的金额，实际扣款以 App Store 为准。
     </p>
     <p>
-      价格观测时间
+      价格观测于{" "}
       <time datetime={`${pricesObservedAt}+08:00`}
         >{formatShanghaiTime(pricesObservedAt)}</time
-      >{" · "}汇率日期 <time datetime={fxDate}>{fxDate}</time> ·
-      <a href={fxProviderUrl}>{fxProvider}</a> ·
-      <span class="mono">1 USD = {formatRate(usdToCny)} CNY</span> · 共
-      <span class="mono">{getCountries().length}</span> 个国家/地区、<span
+      >{" · 汇率日期 "}<time datetime={fxDate}>{fxDate}</time>{" · "}
+      <a href={fxProviderUrl}>{fxProvider}</a>{" · "}
+      <span class="mono">1 USD = {formatRate(usdToCny)} CNY</span>{" · 共 "}
+      <span class="mono">{getCountries().length}</span>{" 个国家/地区、"}<span
         class="mono"
         >{formatLocalNumber(getQuoteCount())}</span
-      >{" "}条报价
+      >{" 条报价"}
     </p>
   </div>
 </footer>

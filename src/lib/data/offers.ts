@@ -1,4 +1,3 @@
-import { Decimal } from "decimal.js";
 import {
   billingMonths,
   encodedOfferMonths,
@@ -6,7 +5,6 @@ import {
   type PriceTerms,
 } from "./money.ts";
 import type { Country, Quote, Sku, Snapshot } from "./schema.ts";
-import type { PriceView } from "./views.ts";
 
 export function resolveIntroPeriods(description: string, sku: Sku) {
   const terms =
@@ -89,37 +87,6 @@ export function summarizeFreeTrials(
         a.nameZh.localeCompare(b.nameZh, "zh-CN"),
       ),
     }));
-}
-
-export function renewalMultiplier(quote: OfferPrices): number | null {
-  if (!quote.intro || quote.renewal.local <= quote.intro.local) return null;
-  return quote.intro.local === 0
-    ? Infinity
-    : new Decimal(quote.renewal.local).div(quote.intro.local).toNumber();
-}
-
-export function renewalTrap(quote: OfferPrices) {
-  const multiplier = renewalMultiplier(quote);
-  if (multiplier === Infinity) return { level: "warn", kind: "trial" } as const;
-  if (multiplier !== null && multiplier >= 1.2) {
-    return {
-      level: multiplier >= 10 ? "warn" : "caution",
-      kind: "multiplier",
-      multiplier,
-    } as const;
-  }
-  return null;
-}
-
-export function homeCardNotice(
-  leader: OfferPrices,
-  view: PriceView,
-  renewMonthly: number,
-): number | null {
-  const multiplier = renewalMultiplier(leader);
-  return view === "intro" && multiplier !== null && multiplier >= 10
-    ? renewMonthly
-    : null;
 }
 
 export function isUsdMarket(
