@@ -1,5 +1,8 @@
 ---
+import { getCountries, getMetadata } from "../lib/data";
 import "../styles/global.css";
+
+const { refreshedAt, usdToCny } = getMetadata();
 ---
 
 <!doctype html>
@@ -12,6 +15,12 @@ import "../styles/global.css";
   <body>
     <main>
       <h1>Google One / Gemini iOS 价格</h1>
+      <p>覆盖 {getCountries().length} 个国家和地区。</p>
+      <p>
+        数据刷新于
+        <time datetime={refreshedAt}>{refreshedAt.replace("T", " ")}</time>
+      </p>
+      <p>1 USD = {usdToCny} CNY</p>
     </main>
   </body>
 </html>

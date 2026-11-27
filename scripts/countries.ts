@@ -1,0 +1,78 @@
+import type { Country } from "../src/lib/data/schema.ts";
+
+export const countries = {
+  ARE: ["AE", "United Arab Emirates", "中东非洲"],
+  ARG: ["AR", "Argentina", "美洲"],
+  AUS: ["AU", "Australia", "亚太"],
+  BGD: ["BD", "Bangladesh", "亚太"],
+  BRA: ["BR", "Brazil", "美洲"],
+  CAN: ["CA", "Canada", "美洲"],
+  CHE: ["CH", "Switzerland", "欧洲"],
+  CHL: ["CL", "Chile", "美洲"],
+  CMR: ["CM", "Cameroon", "中东非洲"],
+  COL: ["CO", "Colombia", "美洲"],
+  DEU: ["DE", "Germany", "欧洲"],
+  DNK: ["DK", "Denmark", "欧洲"],
+  DZA: ["DZ", "Algeria", "中东非洲"],
+  EGY: ["EG", "Egypt", "中东非洲"],
+  GBR: ["GB", "United Kingdom", "欧洲"],
+  GEO: ["GE", "Georgia", "欧洲"],
+  GHA: ["GH", "Ghana", "中东非洲"],
+  HKG: ["HK", "Hong Kong", "亚太"],
+  HUN: ["HU", "Hungary", "欧洲"],
+  IDN: ["ID", "Indonesia", "亚太"],
+  IND: ["IN", "India", "亚太"],
+  ISR: ["IL", "Israel", "中东非洲"],
+  JOR: ["JO", "Jordan", "中东非洲"],
+  JPN: ["JP", "Japan", "亚太"],
+  KAZ: ["KZ", "Kazakhstan", "亚太"],
+  KEN: ["KE", "Kenya", "中东非洲"],
+  KHM: ["KH", "Cambodia", "亚太"],
+  KOR: ["KR", "South Korea", "亚太"],
+  KWT: ["KW", "Kuwait", "中东非洲"],
+  LAO: ["LA", "Laos", "亚太"],
+  LKA: ["LK", "Sri Lanka", "亚太"],
+  MAR: ["MA", "Morocco", "中东非洲"],
+  MEX: ["MX", "Mexico", "美洲"],
+  MMR: ["MM", "Myanmar", "亚太"],
+  MYS: ["MY", "Malaysia", "亚太"],
+  NGA: ["NG", "Nigeria", "中东非洲"],
+  NOR: ["NO", "Norway", "欧洲"],
+  NPL: ["NP", "Nepal", "亚太"],
+  NZL: ["NZ", "New Zealand", "亚太"],
+  OMN: ["OM", "Oman", "中东非洲"],
+  PAK: ["PK", "Pakistan", "亚太"],
+  PER: ["PE", "Peru", "美洲"],
+  PHL: ["PH", "Philippines", "亚太"],
+  POL: ["PL", "Poland", "欧洲"],
+  QAT: ["QA", "Qatar", "中东非洲"],
+  ROU: ["RO", "Romania", "欧洲"],
+  SAU: ["SA", "Saudi Arabia", "中东非洲"],
+  SEN: ["SN", "Senegal", "中东非洲"],
+  SGP: ["SG", "Singapore", "亚太"],
+  SWE: ["SE", "Sweden", "欧洲"],
+  THA: ["TH", "Thailand", "亚太"],
+  TUN: ["TN", "Tunisia", "中东非洲"],
+  TUR: ["TR", "Türkiye", "中东非洲"],
+  TWN: ["TW", "Taiwan", "亚太"],
+  TZA: ["TZ", "Tanzania", "中东非洲"],
+  UKR: ["UA", "Ukraine", "欧洲"],
+  USA: ["US", "United States", "美洲"],
+  UZB: ["UZ", "Uzbekistan", "亚太"],
+  VNM: ["VN", "Vietnam", "亚太"],
+  ZAF: ["ZA", "South Africa", "中东非洲"],
+} as const satisfies Record<
+  string,
+  readonly [string, string, Country["region"]]
+>;
+
+export function getCountryLabels(code: string) {
+  if (!Object.hasOwn(countries, code)) {
+    throw new Error(`Unmapped country code ${code}`);
+  }
+  const [alpha2, nameEn, region] = countries[code as keyof typeof countries];
+  const flag = String.fromCodePoint(
+    ...Array.from(alpha2, (letter) => letter.charCodeAt(0) + 127397),
+  );
+  return { nameEn, region, flag };
+}

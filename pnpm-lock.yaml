@@ -191,6 +191,9 @@ importers:
       astro:
         specifier: 7.4.13
         version: 7.4.13(@types/node@22.20.7)(jiti@2.7.0)(yaml@2.9.1)
+      decimal.js:
+        specifier: 10.6.0
+        version: 10.6.0
       oxc-transform-react:
         specifier: 0.156.0
         version: 0.156.0
@@ -200,6 +203,9 @@ importers:
       react-dom:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@astrojs/check':
         specifier: 0.9.12
@@ -228,6 +234,9 @@ importers:
       lefthook:
         specifier: 2.2.4
         version: 2.2.4
+      read-excel-file:
+        specifier: 9.3.20
+        version: 9.3.20
       tailwindcss:
         specifier: 4.3.5
         version: 4.3.5
@@ -1617,6 +1626,9 @@ packages:
   csstype@3.2.4:
     resolution: {integrity: sha512-PoKaoPzQapnEoqUSnHx1u6W6ku8CVEgKsnpmmzU3m1nwkidpPBQ8V/Zq2+bWNrsOKoKLwTGdbx6xF7BXP1zLVQ==}
 
+  decimal.js@10.6.0:
+    resolution: {integrity: sha512-YpgQiITW3JXGntzdUmyUR1V812Hn8T1YVXhCu+wO3OpS4eU9l4YdD3qjyiKdV6mvV29zapkMeD390UVEf2lkUg==}
+
   defu@6.1.7:
     resolution: {integrity: sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ==}
 
@@ -1726,6 +1738,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   flattie@1.1.1:
     resolution: {integrity: sha512-9UbaD6XdAL97+k/n+N7JwX46K/M6Zc6KcFYskrYL8wbBV/Uyk0CTAMY0VT+qiK5PM7AIc9aTWYtq65U7T+aCNQ==}
@@ -2032,6 +2047,9 @@ packages:
   node-fetch-native@1.6.7:
     resolution: {integrity: sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q==}
 
+  node-int64@0.4.0:
+    resolution: {integrity: sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==}
+
   node-mock-http@1.0.5:
     resolution: {integrity: sha512-KQyt/wLjG3TAc7DOUhpqWzgd4ERxR80JOlTK5VE5R1S12IaPVN5qkj4klBce9HPG1Njuup4Sb5bljaT34lIyjw==}
 
@@ -2127,6 +2145,10 @@ packages:
     resolution: {integrity: sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==}
     engines: {node: '>=0.10.0'}
 
+  read-excel-file@9.3.20:
+    resolution: {integrity: sha512-vRWkVDwHBzlrc2ic4AdQq43fZLpm/7iAD0vW6Ejmkw66hW90BxZ7zXhLmGSOeNSGKDG6c8Wu9WVecJ1qcpM6XQ==}
+    engines: {node: '>=18'}
+
   readdirp@5.1.1:
     resolution: {integrity: sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA==}
     engines: {node: '>= 20.19.0'}
@@ -2180,6 +2202,10 @@ packages:
   sax@1.6.1:
     resolution: {integrity: sha512-42tBVwLWnaQvW5zc4HbZrTuWccECCZfBi92FDuwtqxasH+JbPB3/FOKb1m222K42R4WxuxzzMsTswfzgtSu64Q==}
     engines: {node: '>=11.0.0'}
+
+  saxen@11.2.0:
+    resolution: {integrity: sha512-2bG564AAJcm/3vyZC0Uhs/mACrH+4AHMaKHKAB2M5xMqomUZa27FQ7MYaQGFKVcJk/MVzSEQ34A8QZWW+eiWEw==}
+    engines: {node: '>= 20.12'}
 
   scheduler@0.28.0:
     resolution: {integrity: sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw==}
@@ -2387,6 +2413,10 @@ packages:
         optional: true
       uploadthing:
         optional: true
+
+  unzipper-esm@0.13.3:
+    resolution: {integrity: sha512-LUO6VZ6fCzkDbdMev0/fOhoIeVGKaOkTIOoYxVLE0SQjfvmAHK+oywl7lfhloSZIsdGJ25mJ18Mtd9CyTASjrA==}
+    engines: {node: '>=8.0.0'}
 
   verkit@0.5.0:
     resolution: {integrity: sha512-u4J1hr6Y+C/hit34GwL3eIcUf3wngT8TlYUjK7tk0jxydKLAq3sYvifjdTDA6U3KCKRcQCQDGf/srjxfZF3l7g==}
@@ -2602,6 +2632,10 @@ packages:
     resolution: {integrity: sha512-Tb2FUhB4vUsGQlfSquQLYkApkuPAFQXGFzxWKHHumVz2dK+X1RUm/HnID4+TfIGYJ1kTcwOaCk/buYCEJr6YjQ==}
     engines: {node: '>=20.11'}
     hasBin: true
+
+  worker-f@0.1.25:
+    resolution: {integrity: sha512-H0JI9LVt7/5He3fR81CrPAOPqKcL/++Ah0C64C9/E9vyj2cLgUta7KT/fidjyGbKm5lqhESt+KCglLlcqNDW9Q==}
+    engines: {node: '>=12'}
 
   wrap-ansi@9.0.2:
     resolution: {integrity: sha512-42AtmgqjV+X1VpdOfyTGOYRi0/zsoLqtXQckTmqTeybT+BDIbM/Guxo7x3pE2vtpr1ok6xRqM9OpBe+Jyoqyww==}
@@ -3897,6 +3931,8 @@ snapshots:
 
   csstype@3.2.4: {}
 
+  decimal.js@10.6.0: {}
+
   defu@6.1.7: {}
 
   dequal@2.0.3: {}
@@ -3986,6 +4022,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
       picomatch: 4.0.7
+
+  fflate@0.8.3: {}
 
   flattie@1.1.1: {}
 
@@ -4246,6 +4284,8 @@ snapshots:
 
   node-fetch-native@1.6.7: {}
 
+  node-int64@0.4.0: {}
+
   node-mock-http@1.0.5: {}
 
   normalize-path@3.0.0: {}
@@ -4344,6 +4384,13 @@ snapshots:
 
   react@19.3.1: {}
 
+  read-excel-file@9.3.20:
+    dependencies:
+      fflate: 0.8.3
+      saxen: 11.2.0
+      unzipper-esm: 0.13.3
+      worker-f: 0.1.25
+
   readdirp@5.1.1: {}
 
   regex-recursion@6.0.2:
@@ -4438,6 +4485,8 @@ snapshots:
       '@bruits/satteri-win32-x64-msvc': 0.11.7
 
   sax@1.6.1: {}
+
+  saxen@11.2.0: {}
 
   scheduler@0.28.0: {}
 
@@ -4622,6 +4671,11 @@ snapshots:
       ofetch: 1.5.1
       ufo: 1.6.4
 
+  unzipper-esm@0.13.3:
+    dependencies:
+      graceful-fs: 4.2.12
+      node-int64: 0.4.0
+
   verkit@0.5.0: {}
 
   vfile-message@4.0.4:
@@ -4781,6 +4835,8 @@ snapshots:
   vscode-uri@3.2.0: {}
 
   why-is-node-running@3.2.1: {}
+
+  worker-f@0.1.25: {}
 
   wrap-ansi@9.0.2:
     dependencies:
