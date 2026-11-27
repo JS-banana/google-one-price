@@ -2,6 +2,7 @@
 import CountryLabel from "../../components/CountryLabel.astro";
 import CountrySkuTable from "../../components/CountrySkuTable.astro";
 import Layout from "../../components/Layout.astro";
+import ViewBar from "../../components/ViewBar.astro";
 import {
   type Country,
   getCountries,
@@ -24,9 +25,7 @@ const { country } = Astro.props as { country: Country };
 const { code, nameZh, nameEn, currency } = country;
 const quotes = getCountryQuotes(code);
 const advantages = getCountryAdvantages(code).sort((a, b) => a.rank - b.rank);
-const lowestSkus = new Set(
-  advantages.filter(({ rank }) => rank === 1).map(({ quote }) => quote.skuId),
-);
+const lowest = advantages.filter(({ rank }) => rank === 1).length;
 const fx = getExchangeRates().find((rate) => rate.currency === currency);
 if (!fx) throw new Error(`Missing exchange rate for ${currency}`);
 const cnyPerLocal = getMetadata().usdToCny / fx.unitsPerUsd;
@@ -37,7 +36,7 @@ const pro = quotes.find(
 );
 const best = advantages[0];
 const quoteSummary = best
-  ? `${tiers[best.id].name}首年月均 ${formatCny(best.price)}，全球第 ${best.rank}。`
+  ? `${tiers[best.id].name} 首年月均 ${formatCny(best.price)}/月，全球第 ${best.rank}。`
   : pro
     ? `AI Pro 原价月付折合 ${formatCny(pro.renewal.cny)}。`
     : "";
@@ -76,7 +75,7 @@ const description = `查看${nameZh}（${code}）的 ${active} 条在售 Google 
   {advantages.length > 0 && (
     <section class="advantages" aria-label="全球排名优势">
       <p>
-        按首年月均，<span class="mono">{lowestSkus.size}</span> 个档位全球最低，
+        按首年月均，<span class="mono">{lowest}</span> 个档位全球最低，
         <span class="mono">{advantages.length}</span> 个档位进入前 3。
       </p>
       <div class="pills">
@@ -91,7 +90,8 @@ const description = `查看${nameZh}（${code}）的 ${active} 条在售 Google 
       </div>
     </section>
   )}
-  <CountrySkuTable {quotes} {lowestSkus} />
+  <ViewBar />
+  <CountrySkuTable {quotes} />
   <p class="matrix-link"><a href={`/matrix?q=${code}`}>在矩阵中查看 →</a></p>
 </Layout>
 <style>
@@ -120,5 +120,8 @@ const description = `查看${nameZh}（${code}）的 ${active} 条在售 Google 
 }
 .matrix-link {
   margin-top: 16px;
+}
+:global(#country-skus) {
+  margin-top: 12px;
 }
 </style>

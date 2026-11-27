@@ -28,7 +28,7 @@ const leader = defaultRanking[0];
 const cheapest = countries.find(
   ({ code }) => code === leader?.quote.countryCode,
 );
-const description = `${tier.name}覆盖 ${defaultRanking.length} 个国家/地区，首年月均最低为${cheapest?.nameZh ?? ""} ${formatCny(leader?.price ?? null)}。查看首期、续费和完整排名。`;
+const description = `${tier.name} 覆盖 ${defaultRanking.length} 个国家/地区，首年月均最低为 ${cheapest?.nameZh ?? ""} ${formatCny(leader?.price ?? null)}/月。查看首期、续费和完整排名。`;
 ---
 
 <Layout
@@ -44,8 +44,8 @@ const description = `${tier.name}覆盖 ${defaultRanking.length} 个国家/地�
       <p class="breadcrumb"><a href="/">低价速查</a> / {line.name}</p>
       <h1>{tier.name}</h1>
       <p class="tier-terms secondary">
-        包含 <span class="mono">{details.skuIds.length}</span> 个
-        <a href="#sku-ids">SKU</a> ·
+        包含 <span class="mono">{details.skuIds.length}</span> 个{" "}
+        <a href="#sku-ids">SKU</a>{" · "}
         {details.introPeriods.length === 0 ? (
           "原价报价，无首期优惠"
         ) : (
@@ -55,11 +55,14 @@ const description = `${tier.name}覆盖 ${defaultRanking.length} 个国家/地�
           </>
         )}
       </p>
+      {"description" in tier && (
+        <p class="tier-terms secondary">{tier.description}</p>
+      )}
     </div>
   </div>
   <ViewBar>
     <label class="control"
-      ><input type="checkbox" data-usd-ranking> 隐藏 USD 计价区</label
+      ><input type="checkbox" data-usd-switch> 隐藏 USD 计价区</label
     >
     <span class="mono small muted" aria-live="polite">
       {priceViews.map((view) => {

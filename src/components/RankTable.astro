@@ -36,7 +36,6 @@ const columns = [
   ["renew", "续费"],
   ["year", "首年月均"],
 ] as const;
-const priceIndexes = { intro: 0, year: 1, renew: 2 };
 const summaryModes = [
   { key: "all", ...allSummary },
   { key: "filtered", ...filteredSummary },
@@ -137,11 +136,7 @@ const isTrial = (rows: RankedQuote[]) => rows[0]?.quote.intro?.local === 0;
                   </td>
                 ) : (
                   <td class="num other-price secondary">
-                    {formatCny(
-                      display.prices[priceIndexes[id]],
-                      id,
-                      display.trial,
-                    )}
+                    {formatCny(display.prices[id], id, display.trial)}
                     {display.annual && <span class="annual small">年付</span>}
                   </td>
                 ),
@@ -299,7 +294,14 @@ html[data-usd="hidden"] .rank-cell[data-filtered-rank="top3"] {
     flex-wrap: wrap;
   }
   .rank-table .country-label {
-    gap: 3px;
+    display: inline-grid;
+    grid-template-columns: 18px max-content;
+    gap: 2px 4px;
+    white-space: nowrap;
+  }
+  .rank-table .country-label .currency-badge {
+    grid-column: 2;
+    justify-self: start;
   }
   .rank-summary > div {
     padding-inline: 4px;

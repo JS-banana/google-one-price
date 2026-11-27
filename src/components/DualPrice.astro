@@ -7,8 +7,9 @@ interface Props {
   display: PriceDisplay;
   price: number;
   view: PriceView;
+  transition?: boolean;
 }
-const { display, price, view } = Astro.props;
+const { display, price, view, transition = false } = Astro.props;
 const label = formatCny(price, view, display.trial);
 ---
 
@@ -17,21 +18,25 @@ const label = formatCny(price, view, display.trial);
     type="button"
     class="price-action"
     data-price-detail
+    aria-haspopup="dialog"
     title={display.detail}
   >
-    <span class="mono amount">{label}</span>
+    <span class="mono amount"
+      >{transition ? `${display.introCny} → ${label}` : label}</span
+    >
     {label !== "免费" && <span class="muted small">/月</span>}
     {display.annual && <span class="annual muted small">年付</span>}
     <span class="sr-only">查看价格明细</span>
   </button>
   <div class:list={["price-sub small", { original: !display.offer }]}>
     <span class="mono original">{display.raw}</span>
-    {display.offer && (
+    {display.offer && !transition && (
       <span class="mono cny-offer-when-hidden">
         {display.introCny} → {display.renewCny}
       </span>
     )}
-    {display.badge && (
+    {display.duration && <span class="offer-duration">{display.duration}</span>}
+    {display.badge && !(transition && display.trial) && (
       <span class={`badge ${display.badge.level}`}>{display.badge.label}</span>
     )}
   </div>

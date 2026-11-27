@@ -1,10 +1,13 @@
 ---
 import Layout from "../components/Layout.astro";
-import Matrix from "../components/Matrix";
+import Matrix, { type MatrixOffer } from "../components/Matrix";
 import SearchInput from "../components/SearchInput.astro";
 import ViewBar from "../components/ViewBar.astro";
 import {
+  describePrice,
   getComparisonMatrix,
+  getExchangeRates,
+  getMetadata,
   getTierRanking,
   isUsdMarket,
   regions,
@@ -13,7 +16,6 @@ import {
   tiers,
 } from "../lib/data";
 import { formatCny } from "../lib/format";
-import { type PriceDisplay, priceDisplay } from "../lib/price-display";
 import "../styles/matrix.css";
 
 const rows = getComparisonMatrix()
@@ -21,7 +23,7 @@ const rows = getComparisonMatrix()
     country: { ...country, usd: isUsdMarket(country) },
     cells: cells.map((variants) => {
       if (!variants.some(Boolean)) return null;
-      const offers: PriceDisplay[] = [];
+      const offers: MatrixOffer[] = [];
       const indexes = new Map<string, number>();
       const picks = variants.map((row) => {
         if (!row) throw new Error(`Missing price view for ${country.code}`);
@@ -29,10 +31,28 @@ const rows = getComparisonMatrix()
         if (known !== undefined) return known;
         const index = offers.length;
         indexes.set(row.quote.skuId, index);
-        offers.push(priceDisplay(row.quote));
+        const { annual, introMonths } = describePrice(row.quote);
+        const { renewal, intro, currency } = row.quote;
+        const billing = annual ? 12 : 1;
+        offers.push(
+          currency !== country.currency
+            ? [
+                renewal.local,
+                billing,
+                intro?.local ?? null,
+                introMonths,
+                currency,
+              ]
+            : intro
+              ? [renewal.local, billing, intro.local, introMonths]
+              : [renewal.local, billing],
+        );
         return index;
       });
-      return { offers, picks, ranks: variants.map((row) => row?.rank ?? 0) };
+      const ranks = variants.map((row) => row?.rank ?? 0);
+      return offers.length > 1
+        ? ([offers[0], ranks, offers.slice(1), picks] as const)
+        : ([offers[0], ranks] as const);
     }),
   }))
   .sort((a, b) => a.country.nameZh.localeCompare(b.country.nameZh, "zh-CN"));
@@ -45,6 +65,13 @@ const groups = tierGroups.map(({ line, name, ids }) => ({
     pill: `${line === "pro" ? "Pro " : line === "plus" ? "Plus " : ""}${tiers[id].shortName}`,
   })),
 }));
+const rates = Object.fromEntries(
+  getExchangeRates().map(({ currency, unitsPerUsd }) => [
+    currency,
+    unitsPerUsd,
+  ]),
+);
+const { usdToCny } = getMetadata();
 const pro = getTierRanking("ai-pro-monthly", "year")[0];
 const lead = rows.find(({ country }) => country.code === pro.quote.countryCode)
   ?.country.nameZh;
@@ -68,7 +95,7 @@ const description = `比较 ${rows.length} 个国家/地区 × ${tierIds.length}
     />
     <div class="matrix-toggle">
       <label class="control"
-        ><input type="checkbox" data-matrix-filter="usd"> 隐藏 USD 计价区</label
+        ><input type="checkbox" data-usd-switch> 隐藏 USD 计价区</label
       >
       <span id="matrix-visible" class="small mono muted" aria-live="polite"
         >{rows.length} / {rows.length}</span
@@ -82,5 +109,5 @@ const description = `比较 ${rows.length} 个国家/地区 × ${tierIds.length}
       </select>
     </label>
   </ViewBar>
-  <Matrix client:load {rows} {groups} />
+  <Matrix client:load {rows} {groups} {rates} {usdToCny} />
 </Layout>

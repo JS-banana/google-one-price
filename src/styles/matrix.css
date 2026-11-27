@@ -22,6 +22,18 @@
 .matrix-list {
   display: none;
 }
+.matrix-scroll-frame {
+  position: relative;
+}
+.matrix-scroll-frame[data-more-columns="true"]::after {
+  position: absolute;
+  inset: 1px 1px 1px auto;
+  width: 10px;
+  box-shadow: inset -6px 0 6px -5px rgb(0 0 0 / 0.26);
+  pointer-events: none;
+  z-index: 6;
+  content: "";
+}
 .matrix-scroller {
   position: relative;
   overflow: auto;
@@ -29,14 +41,20 @@
   min-height: 280px;
 }
 .full-matrix {
-  width: max-content;
+  --matrix-country-size: 168px;
+  --matrix-price-size: 134px;
+  width: calc(
+    var(--matrix-country-size) +
+    var(--matrix-columns) *
+    var(--matrix-price-size)
+  );
   table-layout: fixed;
 }
 .matrix-country-column {
-  width: 168px;
+  width: var(--matrix-country-size);
 }
 .matrix-price-column {
-  width: 124px;
+  width: var(--matrix-price-size);
 }
 .full-matrix th,
 .full-matrix td {
@@ -136,61 +154,41 @@
   height: 44px;
   text-align: center;
 }
-.full-matrix .matrix-cell-view .dual-price {
-  min-height: 43px;
-  align-content: center;
-  padding: 2px 4px;
-}
-.matrix-cell-view {
-  height: 100%;
-  display: none;
-  background-color: var(--bg-surface);
-}
-html[data-view="intro"] [data-cell-views~="intro"],
-html[data-view="year"] [data-cell-views~="year"],
-html[data-view="renew"] [data-cell-views~="renew"] {
-  display: block;
-}
-html[data-view="intro"] [data-cell-best~="intro"],
-html[data-view="year"] [data-cell-best~="year"],
-html[data-view="renew"] [data-cell-best~="renew"] {
-  background-color: var(--best-bg);
-  box-shadow: inset 2px 0 var(--best);
-}
-:where(html[data-view="intro"]) [data-cell-best~="intro"] .amount,
-:where(html[data-view="year"]) [data-cell-best~="year"] .amount,
-:where(html[data-view="renew"]) [data-cell-best~="renew"] .amount {
-  color: var(--best);
-}
-html[data-view="intro"] [data-cell-top~="intro"],
-html[data-view="year"] [data-cell-top~="year"],
-html[data-view="renew"] [data-cell-top~="renew"] {
-  background-color: var(--good-bg);
-}
-.full-matrix tbody tr:hover .matrix-cell-view,
-.full-matrix tbody tr:hover .matrix-frozen {
+.full-matrix tbody tr:hover :is(.matrix-cell, .matrix-frozen) {
   background-color: var(--bg-hover);
 }
-.compact-price .price-sub {
-  white-space: normal;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  text-align: right;
-  font-size: 10px;
-  line-height: 11px;
+.matrix-cell .price-action {
+  justify-content: flex-start;
+  white-space: nowrap;
 }
-.compact-price .amount {
+.matrix-cell .amount,
+.matrix-sub {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.matrix-cell .amount {
   font-size: 12px;
 }
-.compact-price .matrix-per-month,
-.compact-price .annual {
+.matrix-cell .price-action small,
+.matrix-sub {
   font-size: 10px;
+  color: var(--text-secondary);
+}
+.matrix-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-inline: 4px;
+  white-space: nowrap;
+  line-height: 12px;
+}
+.matrix-sub > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 html[data-original="off"] .full-matrix .matrix-cell {
   height: 34px;
-}
-html[data-original="off"] .full-matrix .matrix-cell-view .dual-price {
-  min-height: 33px;
 }
 @media (max-width: 767px) {
   .matrix-status {
@@ -201,23 +199,26 @@ html[data-original="off"] .full-matrix .matrix-cell-view .dual-price {
   .matrix-mode-button {
     display: inline-flex;
   }
-  :where(.matrix-shell[data-matrix-mode="list"]) .matrix-scroller {
+  :where(.matrix-shell[data-matrix-mode="list"]) .matrix-scroll-frame {
     display: none;
   }
   .matrix-shell[data-matrix-mode="list"] .matrix-list:not([hidden]) {
     display: block;
   }
   .matrix-scroller {
-    max-height: calc(100svh - 238px);
+    max-height: none;
+    min-height: 0;
   }
-  .matrix-country-column {
-    width: 76px;
+  .full-matrix {
+    --matrix-country-size: 76px;
   }
   .full-matrix .matrix-country-text {
     display: none;
   }
   .matrix-country-iso {
-    display: inline;
+    display: grid;
+    font-size: 11px;
+    line-height: 14px;
   }
   .matrix-tier-pills {
     min-width: 0;

@@ -72,22 +72,28 @@ const jsonLd = [
 ---
 
 <!doctype html>
-<html lang="zh-CN" data-view="year" data-original="on">
+<html lang="zh-CN" data-view="year" data-original="on" data-usd="shown">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script is:inline>
     (() => {
       const root = document.documentElement;
-      const view = new URLSearchParams(location.search).get("view");
+      const params = new URLSearchParams(location.search);
+      const view = params.get("view");
+      const hideUsd = params.get("usd") === "hide";
       const valid = (value) => ["intro", "year", "renew"].includes(value);
       if (valid(view)) root.dataset.view = view;
+      if (hideUsd) root.dataset.usd = "hidden";
       try {
         const saved = localStorage.getItem("g1:view");
         if (valid(view)) localStorage.setItem("g1:view", view);
         else if (valid(saved)) root.dataset.view = saved;
         root.dataset.original =
           localStorage.getItem("g1:original") === "off" ? "off" : "on";
+        if (hideUsd) localStorage.setItem("g1:usd", "hide");
+        else if (localStorage.getItem("g1:usd") === "hide")
+          root.dataset.usd = "hidden";
       } catch {}
     })();
     </script>
@@ -146,7 +152,7 @@ const jsonLd = [
       <slot />
     </main>
     <Footer />
-    <section id="price-detail" popover aria-label="价格明细">
+    <section id="price-detail" popover role="dialog" aria-label="价格明细">
       <p></p>
       <button
         type="button"

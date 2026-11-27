@@ -46,14 +46,17 @@ export function formatMultiplier(value: number): string {
 }
 
 export function formatRelative(value: number | null): string {
-  return value === null ? "·" : `+${integer.format(value * 100)}%`;
+  if (value === null) return "·";
+  if (value > 0 && value < 0.005) return "<1%";
+  return `+${integer.format(value * 100)}%`;
 }
 
 export function formatSkuDescription(description: string): string {
   return description
-    .replace(/首(\d+)期 \$0 免费试用/gu, "首 $1 期免费试用")
+    .replace(/\s*·\s*首\d+期 \$0 免费试用/gu, "")
     .replace(/首期\$\d+(?:\.\d+)?特价/gu, "首期特价")
     .replace(/\(\d+% off\)/gu, "")
+    .replace(/首期(\d+(?:\.\d+)?)折/gu, "首期 $1 折")
     .replace(/×(\d+)期/gu, " × $1 期");
 }
 

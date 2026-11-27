@@ -9,10 +9,39 @@
     )) {
       checkbox.checked = root.dataset.original === "on";
     }
+    for (const checkbox of document.querySelectorAll("[data-usd-switch]")) {
+      checkbox.checked = root.dataset.usd === "hidden";
+    }
   };
+
+  function syncCountryOrder() {
+    const view = root.dataset.view;
+    const table = document.getElementById("country-skus");
+    if (!table || table.dataset.sortedView === view) return;
+    for (const group of table.querySelectorAll("[data-sku-group]")) {
+      const rows = [...group.querySelectorAll("[data-sku-row]")];
+      rows.sort((a, b) => Number(a.dataset[view]) - Number(b.dataset[view]));
+      group.append(...rows);
+    }
+    table.dataset.sortedView = view;
+  }
 
   const feedback = new WeakMap();
   const popover = document.getElementById("price-detail");
+  function showPriceDetail(trigger, text) {
+    if (typeof popover.showPopover !== "function") return;
+    popover.querySelector("p").textContent = text;
+    const bounds = trigger.getBoundingClientRect();
+    popover.showPopover({ source: trigger });
+    const width = popover.offsetWidth;
+    const height = popover.offsetHeight;
+    const fitsBelow = bounds.bottom + 6 + height < window.innerHeight - 8;
+    popover.style.left = `${Math.max(8, Math.min(bounds.right - width, window.innerWidth - width - 8))}px`;
+    popover.style.top = `${Math.max(8, fitsBelow ? bounds.bottom + 6 : bounds.top - height - 6)}px`;
+  }
+  document.addEventListener("g1:price-detail", ({ detail }) => {
+    showPriceDetail(detail.trigger, detail.text);
+  });
   document.addEventListener("click", async (event) => {
     const target = event.target;
     const copy = target.closest("[data-copy]");
@@ -34,16 +63,7 @@
     }
 
     const trigger = target.closest("[data-price-detail]");
-    if (trigger && typeof popover.showPopover === "function") {
-      popover.querySelector("p").textContent = trigger.title;
-      const bounds = trigger.getBoundingClientRect();
-      popover.showPopover({ source: trigger });
-      const width = popover.offsetWidth;
-      const height = popover.offsetHeight;
-      const fitsBelow = bounds.bottom + 6 + height < window.innerHeight - 8;
-      popover.style.left = `${Math.max(8, Math.min(bounds.right - width, window.innerWidth - width - 8))}px`;
-      popover.style.top = `${Math.max(8, fitsBelow ? bounds.bottom + 6 : bounds.top - height - 6)}px`;
-    }
+    if (trigger) showPriceDetail(trigger, trigger.title);
   });
 
   document.addEventListener("change", (event) => {
@@ -63,8 +83,17 @@
       }
       document.dispatchEvent(new Event("g1:preferences"));
     }
-    if (input.matches("[data-usd-ranking]")) {
+    if (input.matches("[data-usd-switch]")) {
+      const url = new URL(location.href);
+      if (input.checked) url.searchParams.set("usd", "hide");
+      else url.searchParams.delete("usd");
+      history.replaceState(history.state, "", url);
       root.dataset.usd = input.checked ? "hidden" : "shown";
+      try {
+        if (input.checked) localStorage.setItem("g1:usd", "hide");
+        else localStorage.removeItem("g1:usd");
+      } catch {}
+      document.dispatchEvent(new Event("g1:preferences"));
     }
     if (input.matches("[data-sku-line], [data-sku-history]")) {
       const table = document.getElementById("country-skus");
@@ -99,8 +128,13 @@
   });
 
   document.addEventListener("g1:preferences", syncPreferences);
-  window.addEventListener("pageshow", () => {
-    const view = new URLSearchParams(location.search).get("view");
+  document.addEventListener("g1:preferences", syncCountryOrder);
+  const applyPreferences = () => {
+    const params = new URLSearchParams(location.search);
+    const view = params.get("view");
+    const hideUsd = params.get("usd") === "hide";
+    if (["intro", "year", "renew"].includes(view)) root.dataset.view = view;
+    if (hideUsd) root.dataset.usd = "hidden";
     try {
       const saved = ["intro", "year", "renew"].includes(view)
         ? view
@@ -108,10 +142,17 @@
       if (["intro", "year", "renew"].includes(saved)) root.dataset.view = saved;
       root.dataset.original =
         localStorage.getItem("g1:original") === "off" ? "off" : "on";
+      root.dataset.usd =
+        hideUsd || localStorage.getItem("g1:usd") === "hide"
+          ? "hidden"
+          : "shown";
     } catch {}
     document.dispatchEvent(new Event("g1:preferences"));
-  });
+  };
+  window.addEventListener("pageshow", applyPreferences);
+  window.addEventListener("popstate", applyPreferences);
   syncPreferences();
+  syncCountryOrder();
 
   const openChange = () => {
     const id = location.hash.slice(1);
@@ -130,8 +171,7 @@
     const params = new URLSearchParams(location.search);
     for (const field of matrixFilters) {
       const value = params.get(field.dataset.matrixFilter);
-      if (field.type === "checkbox") field.checked = value === "hide";
-      else field.value = value ?? "";
+      field.value = value ?? "";
       if (field.type === "select-one" && field.selectedIndex === -1)
         field.value = "";
     }
@@ -139,8 +179,7 @@
   const updateMatrixFilter = (field) => {
     if (!field.matches("[data-matrix-filter]")) return;
     const key = field.dataset.matrixFilter;
-    const value =
-      field.type === "checkbox" ? (field.checked ? "hide" : "") : field.value;
+    const value = field.value;
     const url = new URL(location.href);
     if (value) url.searchParams.set(key, value);
     else url.searchParams.delete(key);
