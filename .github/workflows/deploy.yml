@@ -1,9 +1,7 @@
 name: Deploy
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
     branches: [main]
   workflow_dispatch:
   schedule:
@@ -15,20 +13,14 @@ permissions:
 
 jobs:
   check:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'schedule' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
 
   deploy:
     needs: check
     if: |
-      !cancelled() && (
-        (github.event_name == 'schedule' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_dispatch' && needs.check.result == 'success') ||
-        (github.event_name == 'workflow_run' &&
-         github.event.workflow_run.conclusion == 'success' &&
-         github.event.workflow_run.event == 'push' &&
-         github.event.workflow_run.head_repository.full_name == github.repository)
-      )
+      !cancelled() && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'schedule' || needs.check.result == 'success')
     runs-on: ubuntu-latest
     concurrency:
       group: production
@@ -39,7 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           persist-credentials: false
 
       - uses: pnpm/action-setup@v6
@@ -49,6 +40,46 @@ jobs:
           node-version-file: .nvmrc
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Restore last validated exchange rates
+        id: fx-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/frankfurter-fx.json
+          # Updating the committed baseline starts a new cache sequence.
+          key: frankfurter-fx-v1-${{ hashFiles('src/data/fx.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: frankfurter-fx-v1-${{ hashFiles('src/data/fx.json') }}-
+
+      - name: Fetch and validate Frankfurter rates
+        id: fx
+        shell: bash
+        env:
+          FX_PREVIOUS_PATH: ${{ runner.temp }}/frankfurter-fx.json
+        run: |
+          if pnpm fx:update --live; then
+            cp src/data/fx.live.json "$FX_PREVIOUS_PATH"
+            echo 'validated=true' >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_EVENT_NAME" == 'schedule' ]]; then
+            echo '::error::Frankfurter refresh failed. The scheduled deployment was stopped.'
+            exit 1
+          else
+            if [[ -f "$FX_PREVIOUS_PATH" ]]; then
+              cp "$FX_PREVIOUS_PATH" src/data/fx.live.json
+              fallback='the last validated cache, with the committed baseline as backup'
+            else
+              fallback='the committed baseline (src/data/fx.json)'
+            fi
+            message="Frankfurter refresh failed. Continuing deployment with $fallback."
+            echo "::warning::$message"
+            echo "$message" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Save validated exchange rates
+        if: steps.fx.outputs.validated == 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/frankfurter-fx.json
+          key: ${{ steps.fx-cache.outputs.cache-primary-key }}
 
       - run: pnpm build
         env:

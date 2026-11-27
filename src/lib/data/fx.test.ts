@@ -1,10 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   findFxAnomalies,
   fxSchema,
+  loadFx,
   parseFrankfurterRates,
   requiredCurrencies,
-  selectFx,
 } from "./fx.ts";
 
 const rows = requiredCurrencies
@@ -50,15 +54,6 @@ describe("Frankfurter rates", () => {
     expect(() => fxSchema.parse({ ...baseline, date: "2026-11-26" })).toThrow();
   });
 
-  it("prefers a valid live file and falls back when it is missing or invalid", () => {
-    const live = parseFrankfurterRates(
-      rows.map((row) => ({ ...row, date: "2026-11-28" })),
-    );
-    expect(selectFx(baseline, live)).toEqual(live);
-    expect(selectFx(baseline)).toBe(baseline);
-    expect(selectFx(baseline, { ...live, rates: {} })).toBe(baseline);
-  });
-
   it("reports both directions above 20% and accepts exactly ±20%", () => {
     const next = structuredClone(baseline);
     next.rates.AUD.unitsPerUsd = 0.12;
@@ -69,5 +64,48 @@ describe("Frankfurter rates", () => {
       { currency: "EUR", before: 0.1, after: 0.1201, percent: 20.1 },
       { currency: "GBP", before: 0.1, after: 0.0799, percent: -20.1 },
     ]);
+  });
+});
+
+describe("loadFx", () => {
+  let directory: string;
+  let livePath: URL;
+  const live = parseFrankfurterRates(
+    rows.map((row) => ({ ...row, date: "2026-11-28" })),
+  );
+
+  beforeEach(() => {
+    directory = mkdtempSync(join(tmpdir(), "gop-fx-load-"));
+    livePath = pathToFileURL(join(directory, "fx.live.json"));
+  });
+
+  afterEach(() => {
+    rmSync(directory, { force: true, recursive: true });
+    vi.restoreAllMocks();
+  });
+
+  it("reads a valid live file when enabled and uses the baseline otherwise", () => {
+    expect(loadFx(baseline, livePath)).toBe(baseline);
+    writeFileSync(livePath, JSON.stringify(live));
+    expect(loadFx(baseline, livePath)).toEqual(live);
+    expect(loadFx(baseline)).toBe(baseline);
+  });
+
+  it.each([
+    ["malformed JSON", "{"],
+    ["invalid rates", JSON.stringify({ ...live, rates: {} })],
+    [
+      "an older snapshot",
+      JSON.stringify(
+        parseFrankfurterRates(
+          rows.map((row) => ({ ...row, date: "2026-11-26" })),
+        ),
+      ),
+    ],
+  ])("warns and uses the baseline for %s", (_reason, contents) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    writeFileSync(livePath, contents);
+    expect(loadFx(baseline, livePath)).toBe(baseline);
+    expect(warn).toHaveBeenCalledOnce();
   });
 });

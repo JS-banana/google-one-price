@@ -1,12 +1,11 @@
-import { existsSync, readFileSync } from "node:fs";
 import baselineFx from "../../data/fx.json" with { type: "json" };
 import snapshot from "../../data/snapshot.json" with { type: "json" };
 import {
   currencyNames,
   type ExchangeRate,
   fxSchema,
+  loadFx,
   requiredCurrencies,
-  selectFx,
 } from "./fx.ts";
 import { buildMatrix, type Matrix } from "./matrix.ts";
 import { createPricing } from "./money.ts";
@@ -57,22 +56,14 @@ export {
 } from "./tiers.ts";
 export { type PriceView, priceViews, relativeToLowest } from "./views.ts";
 
-const baseline = fxSchema.parse(baselineFx);
-const livePath = "src/data/fx.live.json";
-function loadFx() {
-  if (process.env.FX_LIVE !== "1" || !existsSync(livePath)) return baseline;
-  try {
-    const fx = selectFx(baseline, JSON.parse(readFileSync(livePath, "utf8")));
-    if (fx !== baseline) return fx;
-    console.warn(`Invalid ${livePath}. Using src/data/fx.json.`);
-  } catch (error) {
-    console.warn(
-      `Could not read ${livePath} (${error}). Using src/data/fx.json.`,
-    );
-  }
-  return baseline;
-}
-const fx = loadFx();
+const livePath = new URL(
+  process.env.FX_LIVE_URL ?? "../../data/fx.live.json",
+  import.meta.url,
+);
+const fx = loadFx(
+  fxSchema.parse(baselineFx),
+  process.env.FX_LIVE === "1" ? livePath : undefined,
+);
 const source = snapshot as Snapshot;
 const pricing = createPricing(source.skus, fx);
 const data = {

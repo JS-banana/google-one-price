@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { Decimal } from "decimal.js";
 import { z } from "zod";
 import { rateSchema } from "./schema.ts";
@@ -146,8 +147,16 @@ export function findFxAnomalies(previous: Fx, candidate: Fx) {
   });
 }
 
-export function selectFx(baseline: Fx, live?: unknown): Fx {
-  if (live === undefined) return baseline;
-  const result = fxSchema.safeParse(live);
-  return result.success ? result.data : baseline;
+export function loadFx(baseline: Fx, livePath?: string | URL): Fx {
+  if (!livePath || !existsSync(livePath)) return baseline;
+  try {
+    const live = fxSchema.parse(JSON.parse(readFileSync(livePath, "utf8")));
+    if (live.date >= baseline.date) return live;
+    console.warn(
+      `Ignoring ${livePath}: ${live.date} is older than ${baseline.date}.`,
+    );
+  } catch (error) {
+    console.warn(`Could not load ${livePath}. Using src/data/fx.json.`, error);
+  }
+  return baseline;
 }
