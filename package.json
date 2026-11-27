@@ -11,6 +11,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "deploy": "astro build && wrangler deploy",
+    "cf:dry": "wrangler deploy --dry-run",
     "check": "astro check && tsc --noEmit",
     "lint": "biome lint .",
     "format": "biome format --write .",
@@ -37,6 +39,7 @@
     "read-excel-file": "9.3.20",
     "tailwindcss": "4.3.5",
     "typescript": "6.0.3",
-    "vitest": "5.1.2"
+    "vitest": "5.1.2",
+    "wrangler": "4.168.0"
   }
 }

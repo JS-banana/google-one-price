@@ -1,12 +1,61 @@
-# Google One / Gemini iOS 价格
+# Google One / Gemini iOS Price Tracker
 
-查询 60 个 App Store 市场的本地订阅价、首期优惠和续费价。首页目前展示数据覆盖范围和刷新时间。
+[简体中文](README.zh-CN.md)
+
+Compare Google One and Gemini subscriptions across 60 iOS App Store markets with a Chinese-language price tracker. [Open the live site](https://googleone.laifuyou.com)
+
+## Features
+
+- Compare plans by introductory monthly price, first-year monthly average, or renewal monthly price. Rankings use CNY equivalents and show the original currency alongside them.
+- See the introductory price, offer duration, and renewal price together, with warnings for steep renewal increases.
+- Sort the 60-market price matrix by plan, filter by region, and search by market or currency.
+- Browse individual markets for plan prices and historical quotes, and check the change log for recent updates.
+
+## Quick start
+
+Use Node.js 22 and the pinned pnpm version. [.nvmrc](.nvmrc) · [package.json](package.json)
 
 ```sh
+export pnpm_config_allow_builds='{"lefthook":true,"esbuild":false,"workerd":false}'
 pnpm install --frozen-lockfile
 pnpm dev
+pnpm test
+pnpm build
 ```
 
-使用 `.nvmrc` 指定的 Node 22。静态发布产物由 `pnpm build` 生成到 `dist/`。
+Run `pnpm dev` to start the development server and `pnpm build` to generate `dist/`. The shell setting keeps Lefthook setup enabled and uses the prebuilt platform binaries supplied by Wrangler's dependencies.
 
-把新 Excel 放到 `data/source/GoogleOne_iOS_60_Countries_Matrix.xlsx`，运行 `pnpm data:import` 和 `pnpm data:check`，检查并提交 `src/data/snapshot.json`。使用其他文件名时，给两个命令传入相同路径。详见 [数据源说明](docs/data-source.md)。
+The site uses Astro, TypeScript, Tailwind CSS v4, and an interactive matrix island. Zod validates the normalized snapshot and Vitest runs the tests. Cloudflare Workers serves the static build.
+
+## Refresh the data
+
+1. Save the new workbook locally as `data/source/prices.xlsx`, or use its existing path. Git ignores `.xlsx` files under `data/source/`.
+2. Run `pnpm data:import data/source/prices.xlsx` to validate the workbook and generate `src/data/snapshot.json`.
+3. Run `pnpm data:check data/source/prices.xlsx` against the same workbook, then review the snapshot diff.
+4. Run `pnpm test` and `pnpm build`. Commit the snapshot and get it onto `main`. A successful CI run on `main` triggers deployment.
+
+CI builds from the checked-in snapshot. For the workbook schema and reconciliation rules, see the [data source guide](docs/data-source.md).
+
+## Project structure
+
+```text
+scripts/                 Workbook import and reconciliation
+src/data/snapshot.json   Normalized price snapshot
+src/lib/data/            Schema, price calculations, and page data
+src/pages/               Astro static routes
+public/                  Flags, fonts, and other static assets
+docs/                    Data, design, and deployment guides
+.github/workflows/       Continuous integration and production deployment
+```
+
+## Deployment and contributions
+
+GitHub Actions builds and deploys the site to Cloudflare Workers static assets. Setup, manual releases, cache rules, and rollback are covered in the [deployment guide](docs/deployment.md).
+
+Use English Conventional Commits, such as `fix: clarify renewal pricing`. Lefthook checks staged files and commit messages locally. CI checks the commit range on every pull request.
+
+## License and acknowledgments
+
+The project code and the flag SVGs from flag-icons are MIT-licensed. IBM Plex Mono is distributed under the SIL Open Font License. [Project license](LICENSE) · [flag-icons](https://github.com/lipis/flag-icons) · [Flag license](public/flags/LICENSE.txt) · [Font license](public/fonts/OFL.txt)
+
+Prices come from monitoring public iOS App Store listings and are for reference only. The App Store determines the actual charge. Google, Google One, and Gemini are trademarks of Google LLC. This project is independent of Google.
