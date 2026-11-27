@@ -30,8 +30,8 @@ const topGroups = {
   "storage-5tb-monthly": "5 TB 月付",
   "ai-plus-promo-monthly": "Google AI Plus (400 GB) 首期特价",
   "ai-plus-monthly": "Google AI Plus (400 GB) 原价月付",
-  offers: "0 元试用与自动发现新优惠 SKU 实时榜",
-} satisfies Record<TierId, string>;
+  workbookOffers: "0 元试用与自动发现新优惠 SKU 实时榜",
+} satisfies Partial<Record<TierId, string>> & { workbookOffers: string };
 
 const topRow = z.tuple([
   textSchema.nullable(),
@@ -54,7 +54,7 @@ const matrixRow = z.tuple(
 export function readReferenceViews(
   workbook: Awaited<ReturnType<typeof readWorkbook>>,
 ) {
-  const groupIds = Object.keys(topGroups) as TierId[];
+  const groupIds = Object.keys(topGroups) as (keyof typeof topGroups)[];
   const top = dataRows(workbook, "overview", (row, location) => {
     const [
       label,
@@ -173,13 +173,16 @@ export function reconcile(
 
   let topRows = 0;
   for (const { id, rows: expectedRows } of reference.groups) {
-    const top = rankTier(
-      data,
-      id,
-      expectedRows[0].first !== expectedRows[0].renewal || id === "offers"
-        ? "intro"
-        : "renew",
-    ).slice(0, 5);
+    const top =
+      id === "workbookOffers"
+        ? null
+        : rankTier(
+            data,
+            id,
+            expectedRows[0].first !== expectedRows[0].renewal
+              ? "intro"
+              : "renew",
+          ).slice(0, 5);
     for (const expected of expectedRows) {
       topRows += 1;
       const quote = active.get(`${expected.countryCode}/${expected.skuId}`);
@@ -196,6 +199,7 @@ export function reconcile(
           `${expected.location}: Excel ${source}; raw ${quote ? amounts(quote) : "missing"}`,
         );
       }
+      if (!top) continue;
       const derived = top[expected.rank - 1]?.quote;
       if (
         !derived ||

@@ -56,8 +56,14 @@ export const quoteSchema = z
     renewal: priceSchema,
   })
   .refine(
-    ({ intro, introPeriods }) => (intro === null) === (introPeriods === null),
-    { message: "Intro price and periods must appear together" },
+    ({ intro, introPeriods }) =>
+      intro === null
+        ? introPeriods === null
+        : intro.local === 0 || introPeriods !== null,
+    {
+      message:
+        "Billing periods accompany paid intro prices and are optional for trials",
+    },
   );
 
 export const changeSchema = z

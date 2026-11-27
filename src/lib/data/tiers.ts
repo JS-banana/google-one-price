@@ -4,11 +4,13 @@ import type { Country, Quote, Snapshot } from "./schema.ts";
 import type { PriceView } from "./views.ts";
 
 export const productLines = {
-  ultra: { name: "Ultra 与 20x/5x 大容量", shortName: "Ultra / 30TB" },
+  ultra: {
+    name: "Google AI Ultra（20x）",
+    shortName: "Google AI Ultra（20x）",
+  },
   pro: { name: "Google AI Pro", shortName: "AI Pro" },
   plus: { name: "Google AI Plus", shortName: "AI Plus" },
-  storage: { name: "纯存储", shortName: "纯存储" },
-  offers: { name: "免费试用与优惠", shortName: "免费试用" },
+  storage: { name: "大容量存储", shortName: "大容量存储" },
 } as const;
 export type ProductLine = keyof typeof productLines;
 
@@ -17,8 +19,9 @@ type TierDefinition = {
   shortName: string;
   line: ProductLine;
   requiresIntro?: boolean;
+  description?: string;
   // Earlier SKU IDs win when the same market has identical prices.
-  skus: readonly string[] | null;
+  skus: readonly string[];
 };
 
 export const tiers = {
@@ -54,17 +57,6 @@ export const tiers = {
       "com.google.one.30tb.ai.pro.m",
       "com.google.gemini.30tb.ai.pro.m.iog",
       "com.google.one.30tb.ai.pro.m.iog",
-    ],
-  },
-  "storage-20tb-monthly": {
-    name: "20 TB 存储月付（5x）",
-    line: "ultra",
-    shortName: "20 TB 月付",
-    skus: [
-      "com.google.one.20tb.m",
-      "com.google.gemini.20tb.m",
-      "g1.ios.20tb.m",
-      "g1.ios.20tb.m.v2",
     ],
   },
   "ai-pro-99-monthly": {
@@ -106,6 +98,21 @@ export const tiers = {
     shortName: "原价年付",
     skus: ["com.google.gemini.2tb.ai.a", "g1.ios.2tb.ai.a"],
   },
+  "storage-5tb-monthly": {
+    name: "Google AI Pro（5 TB）原价月付（5tb SKU）",
+    line: "pro",
+    shortName: "原价月付（5tb SKU）",
+    description:
+      "与原价月付是不同 SKU，部分地区更便宜。实际能看到哪个 SKU 取决于 App 与账号。",
+    skus: ["com.google.gemini.5tb.m", "com.google.gemini.5tb.m.iog"],
+  },
+  "ai-pro-promo-yearly": {
+    name: "Google AI Pro（5 TB）年付首年 7.5 折",
+    line: "pro",
+    shortName: "年付首年 7.5 折",
+    requiresIntro: true,
+    skus: ["g1.ios.ai.2tb.a.ip_1yr_25p.acq"],
+  },
   "ai-plus-promo-monthly": {
     name: "Google AI Plus（400 GB）首期特价",
     line: "plus",
@@ -132,29 +139,38 @@ export const tiers = {
       "com.google.one.helium.m.iog",
     ],
   },
+  "ai-plus-promo-yearly": {
+    name: "Google AI Plus（400 GB）年付首年 7.5 折",
+    line: "plus",
+    shortName: "年付首年 7.5 折",
+    requiresIntro: true,
+    skus: ["g1.ios.helium.a.ip_1yr_25p.acq"],
+  },
+  "storage-20tb-monthly": {
+    name: "20 TB 存储月付（5x）",
+    line: "storage",
+    shortName: "20 TB 月付",
+    skus: [
+      "com.google.one.20tb.m",
+      "com.google.gemini.20tb.m",
+      "g1.ios.20tb.m",
+      "g1.ios.20tb.m.v2",
+    ],
+  },
   "storage-10tb-monthly": {
     name: "10 TB 月付",
     line: "storage",
     shortName: "10 TB 月付",
     skus: ["com.google.gemini.10tb.m", "g1.ios.10tb.m"],
   },
-  "storage-5tb-monthly": {
-    name: "5 TB 月付（独立 SKU）",
-    line: "storage",
-    shortName: "5 TB 月付",
-    skus: ["com.google.gemini.5tb.m", "com.google.gemini.5tb.m.iog"],
-  },
-  offers: {
-    name: "免费试用与各档优惠",
-    shortName: "综合优惠榜",
-    line: "offers",
-    skus: null,
-  },
 } as const satisfies Record<string, TierDefinition>;
 
 export type TierId = keyof typeof tiers;
 export type RankedQuote = { rank: number; quote: Quote; price: number };
 export const tierIds = Object.keys(tiers) as TierId[];
+const tierBySku = new Map<string, TierId>(
+  tierIds.flatMap((id) => tiers[id].skus.map((skuId) => [skuId, id] as const)),
+);
 export const tierGroups = (Object.keys(productLines) as ProductLine[]).map(
   (line) => ({
     line,
@@ -164,15 +180,7 @@ export const tierGroups = (Object.keys(productLines) as ProductLine[]).map(
 );
 
 export function tierQuotes(data: Snapshot, tierId: TierId): Quote[] {
-  const { skus, requiresIntro = false }: TierDefinition = tiers[tierId];
-  const skuIds = skus ? new Set(skus) : null;
-  return data.quotes.filter(
-    (quote) =>
-      quote.status === "active" &&
-      (skuIds
-        ? skuIds.has(quote.skuId) && requiresIntro === (quote.intro !== null)
-        : quote.intro !== null),
-  );
+  return data.quotes.filter((quote) => quoteTier(quote) === tierId);
 }
 
 export function rankTier(
@@ -181,7 +189,7 @@ export function rankTier(
   view: PriceView = "year",
 ): RankedQuote[] {
   const priority = new Map<string, number>(
-    tiers[tierId].skus?.map((id, index) => [id, index]),
+    tiers[tierId].skus.map((id, index) => [id, index]),
   );
   const { priceInputs, monthlyCny } = createPricing(data);
   const best = new Map<string, Entry>();
@@ -257,11 +265,26 @@ export function tierOfferTerms(quotes: readonly Pick<Quote, "introPeriods">[]) {
 }
 
 export function quoteLine(
-  quote: Pick<Quote, "description" | "intro">,
+  quote: Pick<Quote, "description" | "skuId">,
 ): ProductLine {
-  if (quote.intro?.local === 0) return "offers";
-  if (/Google AI Ultra|^(?:20|30) TB/u.test(quote.description)) return "ultra";
+  const tier = tierBySku.get(quote.skuId);
+  if (tier) return tiers[tier].line;
+  if (/Google AI Ultra|^30 TB/u.test(quote.description)) return "ultra";
   if (quote.description.startsWith("Google AI Pro")) return "pro";
   if (quote.description.startsWith("Google AI Plus")) return "plus";
   return "storage";
+}
+
+export function quoteTier(quote: Pick<Quote, "skuId" | "intro" | "status">) {
+  const id = tierBySku.get(quote.skuId);
+  if (!id || quote.status !== "active") return undefined;
+  const { requiresIntro = false }: TierDefinition = tiers[id];
+  if (requiresIntro === (quote.intro !== null)) return id;
+}
+
+export function compareTierLeaders(a: RankedQuote, b: RankedQuote) {
+  return (
+    a.price - b.price ||
+    Number(a.quote.intro !== null) - Number(b.quote.intro !== null)
+  );
 }

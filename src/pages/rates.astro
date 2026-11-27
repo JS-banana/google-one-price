@@ -1,11 +1,18 @@
 ---
 import Layout from "../components/Layout.astro";
 import SearchInput from "../components/SearchInput.astro";
-import { getCountries, getExchangeRates, getMetadata } from "../lib/data";
+import {
+  getCountries,
+  getExchangeRates,
+  getMetadata,
+  getTierRanking,
+} from "../lib/data";
 import { formatRate, formatShanghaiTime } from "../lib/format";
 
 const rates = getExchangeRates();
 const countries = getCountries();
+const proMarkets = getTierRanking("ai-pro-promo-yearly").length;
+const plusMarkets = getTierRanking("ai-plus-promo-yearly").length;
 const { usdToCny, fxProvider, fxPublishedAt, refreshedAt } = getMetadata();
 const title = "汇率与价格说明";
 const description = `查看 ${rates.length} 种币种的人民币折算，当前 1 USD = ${formatRate(usdToCny)} CNY。了解 Google One 与 Gemini iOS 首期、首年月均、续费及 USD 计价区的口径。`;
@@ -20,7 +27,7 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
         <dt>报价来源与更新</dt>
         <dd>
           数据来自 iOS App Store
-          商品目录监控，按小时检查。当前报价快照为北京时间
+          商品目录监控，按小时检查。当前报价快照为北京时间{" "}
           <time datetime={`${refreshedAt}+08:00`}
             >{formatShanghaiTime(refreshedAt)}</time
           >。
@@ -36,14 +43,24 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
       <div>
         <dt>首期月价</dt>
         <dd>
-          优惠期间每月的人民币价格。无优惠时取续费原价，零元的首期显示「免费」。
+          优惠期间每月的人民币价格。无优惠时取续费原价，免费试用按 SKU
+          编码显示时长。
         </dd>
       </div>
       <div>
         <dt>首年月均</dt>
         <dd>
-          （首期月价 × 优惠月数 + 续费月价 × 首年剩余月数）÷ 12。年付以 12
-          个月为一个账期，年价除以 12 后参与比较。
+          首年付款总额 ÷ 12。月付的付费优惠按说明里的期数计算，免费试用按 SKU
+          编码扣除试用月数。年付试用结束时计入一次完整年费，年付首年折扣取折后年费。
+        </dd>
+      </div>
+      <div>
+        <dt>档位覆盖范围</dt>
+        <dd>
+          首页榜单和矩阵比较 20x 大容量、Google AI Pro、Google AI Plus 及 20
+          TB、10 TB 存储的精选档位。AI Pro 和 AI Plus 的年付首年 7.5 折分别覆盖
+          {proMarkets} 和 {plusMarkets} 个市场。年付优惠档位按至少 10
+          个活跃市场的覆盖范围选入。免费试用在首页单独汇总，完整报价见国家页。
         </dd>
       </div>
       <div>
@@ -109,6 +126,11 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
             const locales = countries.filter(
               (country) => country.currency === currency,
             );
+            const links = locales.map(({ code, nameZh }) => (
+              <a href={`/countries/${code.toLowerCase()}`}>{nameZh}</a>
+            ));
+            const first =
+              locales.find(({ code }) => code === "USA") ?? locales[0];
             return (
               <tr
                 data-match={`${currency} ${nameZh} ${locales.map(({ code, nameZh, nameEn }) => `${code} ${nameZh} ${nameEn}`).join(" ")}`}
@@ -123,10 +145,18 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
                 <td class="rate-locales">
                   {locales.length === 0 ? (
                     <span class="muted">·</span>
+                  ) : locales.length <= 4 ? (
+                    links
                   ) : (
-                    locales.map(({ code, nameZh }) => (
-                      <a href={`/countries/${code.toLowerCase()}`}>{nameZh}</a>
-                    ))
+                    <>
+                      <span class="rate-all-locales">{links}</span>
+                      <details class="rate-more-locales">
+                        <summary>
+                          {first.nameZh} 等 {locales.length} 个地区
+                        </summary>
+                        <div>{links}</div>
+                      </details>
+                    </>
                   )}
                 </td>
               </tr>
@@ -229,6 +259,9 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
   min-height: 24px;
   margin-right: 8px;
 }
+.rate-more-locales {
+  display: none;
+}
 .disclaimer p + p {
   margin-top: 6px;
 }
@@ -249,6 +282,15 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
     display: block;
     color: var(--text-secondary);
     font: 11px / 15px var(--font-ui);
+  }
+  .rate-all-locales {
+    display: none;
+  }
+  .rate-more-locales {
+    display: block;
+  }
+  .rate-more-locales summary {
+    cursor: pointer;
   }
   .rate-table td,
   .rate-table th {

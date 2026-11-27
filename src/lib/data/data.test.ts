@@ -2,17 +2,21 @@ import { describe, expect, it } from "vitest";
 import { decodeSku } from "../../../scripts/sku.ts";
 import rawSnapshot from "../../data/snapshot.json" with { type: "json" };
 import {
+  compareTierLeaders,
   describePrice,
   getComparisonMatrix,
   getCountries,
   getCountryAdvantages,
   getCountryQuotes,
+  getFreeTrials,
   getSkus,
   getTierDetails,
   getTierRanking,
   getWorkbookMatrix,
   groupChanges,
+  hasHistoricalPriceAnomaly,
   homeCardNotice,
+  isGlobalTierLowest,
   isUsdMarket,
   priceFor,
   priceViews,
@@ -27,7 +31,7 @@ import {
 } from "./index.ts";
 import { introPrice, toPrice } from "./money.ts";
 import { resolveIntroPeriods } from "./offers.ts";
-import { type Quote, snapshotSchema } from "./schema.ts";
+import { type Quote, quoteSchema, snapshotSchema } from "./schema.ts";
 import { rankTier } from "./tiers.ts";
 
 const snapshot = snapshotSchema.parse(rawSnapshot);
@@ -132,8 +136,8 @@ describe("prices and rankings", () => {
   });
 });
 
-describe("stage B price views", () => {
-  it("uses stated billing periods before encoded periods and tracks conflicts", () => {
+describe("price views and offers", () => {
+  it("puts stated paid periods ahead of encoded periods and tracks source conflicts", () => {
     const monthly = decodeSku("com.google.one.2tb.ai.m.2months_eft");
     const annual = decodeSku("com.google.one.100gb.a.1month_eft");
     expect(resolveIntroPeriods("首1期 $0 免费试用", monthly)).toEqual({
@@ -144,10 +148,12 @@ describe("stage B price views", () => {
       periods: 2,
       conflict: false,
     });
-    expect(resolveIntroPeriods("首期 ¥5 ×3期", monthly)).toEqual({
-      periods: 3,
+    const paid = decodeSku("g1.ios.2tb.ai.m.3month_ip_99p");
+    expect(resolveIntroPeriods("首1期 ¥5 ×6期", paid)).toEqual({
+      periods: 6,
       conflict: true,
     });
+    expect(resolveIntroPeriods("没有期数", paid).periods).toBe(3);
     expect(resolveIntroPeriods("年付 · 首1期 $0", annual)).toEqual({
       periods: 1,
       conflict: true,
@@ -194,20 +200,125 @@ describe("stage B price views", () => {
     expect(terms.introMonths).toBe(3);
     expect(terms.renewMonths).toBe(9);
     expect(terms.introTotal + terms.renewTotal).toBeCloseTo(terms.yearTotal);
-    const annual = snapshot.quotes.find(
-      (q) =>
-        q.currency === "USD" &&
-        q.intro?.local === 0 &&
-        decodeSku(q.skuId).billingPeriod === "P1Y",
+  });
+
+  it("uses the SKU duration for trials and charges the full annual renewal in year one", () => {
+    const annual = getCountryQuotes("IND", "active").find(
+      (q) => q.skuId === "com.google.one.100gb.a.1month_eft",
     );
     if (!annual) throw new Error("Missing annual trial fixture");
-    expect(describePrice(annual).annual).toBe(true);
-    expect(priceFor(annual, "renew")).toBeCloseTo(
-      (annual.renewal.local * fx) / 12,
-      10,
-    );
+    expect(describePrice(annual)).toMatchObject({
+      annual: true,
+      introMonths: 1,
+      renewMonths: 11,
+      introTotal: 0,
+    });
+    expect(priceFor(annual, "renew")).toBeCloseTo(annual.renewal.cny / 12, 2);
     expect(priceFor(annual, "intro")).toBe(0);
-    expect(priceFor(annual, "year")).toBe(0);
+    expect(priceFor(annual, "year")).toBe(priceFor(annual, "renew"));
+    const withoutSourcePeriods = quoteSchema.parse({
+      ...annual,
+      introPeriods: null,
+    });
+    expect(describePrice(withoutSourcePeriods)).toEqual(describePrice(annual));
+    for (const [suffix, months] of [
+      ["2months_eft", 2],
+      ["1month_eft", 1],
+    ] as const) {
+      const monthly = getCountryQuotes("IND", "active").find(
+        (q) => q.skuId.includes("2tb.ai.m.") && q.skuId.endsWith(suffix),
+      );
+      if (!monthly) throw new Error(`Missing ${suffix} fixture`);
+      expect(describePrice(monthly).introMonths).toBe(months);
+      expect(priceFor(monthly, "intro")).toBe(0);
+      expect(priceFor(monthly, "year")).toBeCloseTo(
+        (priceFor(monthly, "renew") * (12 - months)) / 12,
+        10,
+      );
+    }
+  });
+
+  it("uses first-year discounted annual prices and counts the qualifying markets", () => {
+    for (const [id, count, expected] of [
+      ["ai-pro-promo-yearly", 60, 71.26],
+      ["ai-plus-promo-yearly", 20, 16.44],
+    ] as const) {
+      const rows = getTierRanking(id);
+      expect(rows).toHaveLength(count);
+      const turkey = rows.find(({ quote }) => quote.countryCode === "TUR");
+      if (!turkey) throw new Error(`Missing Turkish quote for ${id}`);
+      expect(turkey.price).toBeCloseTo(expected, 2);
+      expect(turkey.price).toBe(priceFor(turkey.quote, "intro"));
+      expect(describePrice(turkey.quote)).toMatchObject({
+        annual: true,
+        introMonths: 12,
+        renewMonths: 0,
+      });
+    }
+  });
+
+  it("groups active free trials by product and deduplicates trial aliases and markets", () => {
+    const rows = getFreeTrials();
+    expect(rows).toHaveLength(6);
+    const pro = rows.find(
+      ({ product }) => product === "Google AI Pro (5 TB) · 月付",
+    );
+    expect(pro?.months).toEqual([1, 2]);
+    expect(pro?.countries).toHaveLength(60);
+    expect(new Set(pro?.countries.map(({ code }) => code)).size).toBe(60);
+    const eligible = snapshot.quotes.filter(
+      (q) =>
+        q.status === "active" &&
+        q.intro?.local === 0 &&
+        q.description.startsWith("Google AI Pro"),
+    );
+    expect(pro?.lowest.price).toBe(
+      Math.min(...eligible.map((q) => priceFor(q, "renew"))),
+    );
+    expect(
+      rows.find(({ product }) => product === "100 GB 存储 · 年付")?.countries,
+    ).toHaveLength(32);
+    expect(rows.flatMap(({ months }) => months)).not.toContain(12);
+  });
+
+  it("flags only historical quotes whose intro exceeds their renewal", () => {
+    const anomaly = getCountryQuotes("UZB", "historical").find(
+      (q) => q.skuId === "g1.ai.pro.6months_ip_50p",
+    );
+    if (!anomaly) throw new Error("Missing historical anomaly fixture");
+    expect(hasHistoricalPriceAnomaly(anomaly)).toBe(true);
+    expect(hasHistoricalPriceAnomaly({ ...anomaly, status: "active" })).toBe(
+      false,
+    );
+    expect(
+      hasHistoricalPriceAnomaly({ ...anomaly, intro: anomaly.renewal }),
+    ).toBe(false);
+  });
+
+  it("prefers non-promotional leaders when the comparison price ties", () => {
+    const standard = getTierRanking("ai-plus-monthly", "renew")[0];
+    const promo = getTierRanking("ai-plus-promo-monthly", "renew")[0];
+    expect(standard.price).toBe(promo.price);
+    expect([promo, standard].sort(compareTierLeaders)[0]).toBe(standard);
+  });
+
+  it("recognizes all active aliases tied at the global minimum", () => {
+    const aliases = getCountryQuotes("TUR").filter(
+      (q) => q.skuId.includes(".20tb.m") && q.status === "active",
+    );
+    const lowest = getTierRanking("storage-20tb-monthly")[0].price;
+    const tied = aliases.filter((q) => priceFor(q, "year") === lowest);
+    expect(tied).toHaveLength(3);
+    for (const q of tied) {
+      expect(isGlobalTierLowest(q, "year", priceFor(q, "year"))).toBe(true);
+      expect(
+        isGlobalTierLowest(
+          { ...q, status: "historical" },
+          "year",
+          priceFor(q, "year"),
+        ),
+      ).toBe(false);
+    }
   });
 
   it("classifies price jumps and shows the homepage warning only in intro", () => {
@@ -245,7 +356,6 @@ describe("stage B price views", () => {
       "pro",
       "plus",
       "storage",
-      "offers",
     ]);
     expect(tierGroups.flatMap(({ ids }) => ids)).toEqual(tierIds);
     const matrix = getComparisonMatrix();
@@ -289,18 +399,18 @@ describe("stage B price views", () => {
   });
 
   it("classifies country SKU groups and aggregates time-tied change rows", () => {
-    expect(quoteLine({ description: "20 TB 存储 (5x)", intro: null })).toBe(
-      "ultra",
-    );
     expect(
-      quoteLine({ description: "Google AI Pro (5 TB)", intro: null }),
-    ).toBe("pro");
+      quoteLine({ description: "20 TB 存储 (5x)", skuId: "g1.ios.20tb.m" }),
+    ).toBe("storage");
     expect(
       quoteLine({
         description: "Google AI Pro (5 TB)",
-        intro: toPrice(0, 1, 1),
+        skuId: "com.google.one.2tb.ai.m.2months_eft",
       }),
-    ).toBe("offers");
+    ).toBe("pro");
+    expect(
+      quoteLine({ description: "5 TB", skuId: "com.google.gemini.5tb.m" }),
+    ).toBe("pro");
     const groups = groupChanges(snapshot.changes);
     expect(groups).toHaveLength(14);
     expect(groups.reduce((sum, group) => sum + group.summary.count, 0)).toBe(

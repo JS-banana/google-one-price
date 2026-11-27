@@ -35,10 +35,83 @@ export function introPrice(quote: Pick<Quote, "intro" | "renewal">): Price {
   return quote.intro ?? quote.renewal;
 }
 
+export function encodedOfferMonths(sku: Sku | undefined): number | null {
+  const duration = /^P(\d+)(M|Y)$/.exec(sku?.offer?.encodedDuration ?? "");
+  return duration ? Number(duration[1]) * (duration[2] === "Y" ? 12 : 1) : null;
+}
+
+function priceAmounts(
+  renewal: number,
+  initial: number | null,
+  months: 1 | 12,
+  introMonths: number,
+) {
+  const firstYearIntroMonths = Math.min(12, introMonths);
+  const renewMonths = 12 - firstYearIntroMonths;
+  // Every monthly price shares a denominator of 12, including annual SKUs.
+  const intro = new MoneyDecimal(initial ?? renewal).times(12 / months);
+  const renew = new MoneyDecimal(renewal).times(12 / months);
+  const introTotal = intro.times(firstYearIntroMonths).div(12);
+  // An annual renewal is paid in full when a trial ends.
+  const billingUnits =
+    months === 12 && (initial === 0 || renewMonths > 0) ? 12 : renewMonths;
+  const renewTotal = renew.times(billingUnits).div(12);
+  return {
+    local: { intro, year: introTotal.plus(renewTotal), renew },
+    months,
+    introMonths,
+    renewMonths,
+    introTotal,
+    renewTotal,
+  };
+}
+
+function priceTerms(
+  amounts: ReturnType<typeof priceAmounts>,
+  unitsPerUsd: number,
+  usdToCny: number,
+) {
+  const { local, months, introMonths, renewMonths, introTotal, renewTotal } =
+    amounts;
+  const converted = (amount: Decimal) =>
+    amount.times(usdToCny).div(unitsPerUsd).toNumber();
+  return {
+    prices: {
+      intro: converted(local.intro.div(12)),
+      year: converted(local.year.div(12)),
+      renew: converted(local.renew.div(12)),
+    },
+    annual: months === 12,
+    introMonths,
+    renewMonths,
+    introTotal: converted(introTotal),
+    renewTotal: converted(renewTotal),
+    yearTotal: converted(local.year),
+    cnyPerLocal: converted(new MoneyDecimal(1)),
+  };
+}
+
+export function describeRawPrice(
+  renewal: number,
+  intro: number | null,
+  months: 1 | 12,
+  introMonths: number,
+  unitsPerUsd: number,
+  usdToCny: number,
+) {
+  return priceTerms(
+    priceAmounts(renewal, intro, months, introMonths),
+    unitsPerUsd,
+    usdToCny,
+  );
+}
+
+export type PriceTerms = ReturnType<typeof priceTerms>;
+
 export function createPricing(
   data: Pick<Snapshot, "skus" | "exchangeRates" | "metadata">,
 ) {
-  const periods = new Map(data.skus.map((sku) => [sku.id, sku.billingPeriod]));
+  const skus = new Map(data.skus.map((sku) => [sku.id, sku]));
   const rates = new Map(
     data.exchangeRates.map(({ currency, unitsPerUsd }) => [
       currency,
@@ -50,20 +123,20 @@ export function createPricing(
     const unitsPerUsd = rates.get(quote.currency);
     if (unitsPerUsd === undefined)
       throw new Error(`Missing exchange rate for ${quote.currency}`);
-    const months = billingMonths(periods.get(quote.skuId), quote.description);
-    const introMonths = Math.min(12, (quote.introPeriods ?? 0) * months);
-    // Every monthly price shares a denominator of 12, including annual SKUs.
-    const intro = new MoneyDecimal(introPrice(quote).local).times(12 / months);
-    const renew = new MoneyDecimal(quote.renewal.local).times(12 / months);
-    const introTotal = intro.times(introMonths).div(12);
-    const renewTotal = renew.times(12 - introMonths).div(12);
+    const sku = skus.get(quote.skuId);
+    const months = billingMonths(sku?.billingPeriod, quote.description);
+    const trialMonths = quote.intro?.local === 0 ? encodedOfferMonths(sku) : 0;
+    if (trialMonths === null)
+      throw new Error(`Missing trial duration for ${quote.skuId}`);
+    const introMonths = trialMonths || (quote.introPeriods ?? 0) * months;
     return {
-      local: { intro, year: introTotal.plus(renewTotal), renew },
+      ...priceAmounts(
+        quote.renewal.local,
+        quote.intro?.local ?? null,
+        months,
+        introMonths,
+      ),
       unitsPerUsd,
-      months,
-      introMonths,
-      introTotal,
-      renewTotal,
     };
   };
   const converted = (amount: Decimal, unitsPerUsd: number) =>
@@ -78,28 +151,8 @@ export function createPricing(
       return monthlyCny(local[view], unitsPerUsd);
     },
     describePrice(quote: PricedQuote) {
-      const {
-        local,
-        unitsPerUsd,
-        months,
-        introMonths,
-        introTotal,
-        renewTotal,
-      } = priceInputs(quote);
-      return {
-        prices: {
-          intro: monthlyCny(local.intro, unitsPerUsd),
-          year: monthlyCny(local.year, unitsPerUsd),
-          renew: monthlyCny(local.renew, unitsPerUsd),
-        },
-        annual: months === 12,
-        introMonths,
-        renewMonths: 12 - introMonths,
-        introTotal: converted(introTotal, unitsPerUsd),
-        renewTotal: converted(renewTotal, unitsPerUsd),
-        yearTotal: converted(introTotal.plus(renewTotal), unitsPerUsd),
-        cnyPerLocal: converted(new MoneyDecimal(1), unitsPerUsd),
-      };
+      const amounts = priceInputs(quote);
+      return priceTerms(amounts, amounts.unitsPerUsd, usdToCny);
     },
   };
 }

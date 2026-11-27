@@ -1,6 +1,7 @@
 import snapshot from "../../data/snapshot.json" with { type: "json" };
 import { buildMatrix, type Matrix } from "./matrix.ts";
 import { createPricing } from "./money.ts";
+import { summarizeFreeTrials } from "./offers.ts";
 import type {
   Change,
   Country,
@@ -11,6 +12,7 @@ import type {
   Snapshot,
 } from "./schema.ts";
 import {
+  quoteTier,
   type RankedQuote,
   rankTier,
   type TierId,
@@ -24,6 +26,7 @@ import { type PriceView, priceViews } from "./views.ts";
 export { groupChanges, summarizeChanges } from "./changes.ts";
 export type { Matrix, MatrixSkuId } from "./matrix.ts";
 export {
+  hasHistoricalPriceAnomaly,
   homeCardNotice,
   isUsdMarket,
   renewalMultiplier,
@@ -40,6 +43,7 @@ export type {
 } from "./schema.ts";
 export { regions } from "./schema.ts";
 export {
+  compareTierLeaders,
   productLines,
   quoteLine,
   type RankedQuote,
@@ -55,6 +59,7 @@ export { type PriceView, priceViews, relativeToLowest } from "./views.ts";
 
 const data = snapshot as Snapshot;
 export const { priceFor, describePrice } = createPricing(data);
+export const getFreeTrials = () => summarizeFreeTrials(data);
 
 export function getMetadata(): Metadata {
   return data.metadata;
@@ -123,11 +128,19 @@ export function getCountryAdvantages(countryCode: string) {
   });
 }
 
+export function isGlobalTierLowest(
+  quote: Quote,
+  view: PriceView,
+  price: number,
+) {
+  const id = quoteTier(quote);
+  return id !== undefined && price === getTierRanking(id, view)[0]?.price;
+}
+
 export function getTierDetails(id: TierId) {
   const quotes = tierQuotes(data, id);
   return {
-    skuIds:
-      tiers[id].skus ?? [...new Set(quotes.map(({ skuId }) => skuId))].sort(),
+    skuIds: tiers[id].skus,
     introPeriods: tierOfferTerms(quotes),
   };
 }

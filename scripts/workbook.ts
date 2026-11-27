@@ -1,7 +1,7 @@
 import readExcelFile, { type Row, type SheetData } from "read-excel-file/node";
 import { z } from "zod";
 import { matrixColumns } from "../src/lib/data/matrix.ts";
-import { toPrice } from "../src/lib/data/money.ts";
+import { encodedOfferMonths, toPrice } from "../src/lib/data/money.ts";
 import { resolveIntroPeriods } from "../src/lib/data/offers.ts";
 import {
   amountSchema,
@@ -326,11 +326,13 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
         });
       }
     }
+    const sku = decodeSku(skuId);
     const introPeriods =
-      intro === null
-        ? null
-        : resolveIntroPeriods(description, decodeSku(skuId)).periods;
-    if (intro !== null && introPeriods === null) {
+      intro === null ? null : resolveIntroPeriods(description, sku).periods;
+    if (intro === 0 && encodedOfferMonths(sku) === null) {
+      throw new Error(`${location}: missing trial duration for ${skuId}`);
+    }
+    if (intro !== null && intro > 0 && introPeriods === null) {
       throw new Error(`${location}: missing intro periods for ${skuId}`);
     }
     return {
@@ -391,16 +393,18 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
         `${location}: invalid or conflicting change prices: ${introText} / ${renewalText}`,
       );
     }
+    const intro = localIntro === undefined ? null : canonicalNumber(localIntro);
+    if (intro === 0 && encodedOfferMonths(decodeSku(skuId)) === null) {
+      throw new Error(`${location}: missing trial duration for ${skuId}`);
+    }
+    skuIds.add(skuId);
     return {
       kind,
       countryCode,
       skuId,
       description,
       currency,
-      intro:
-        localIntro === undefined
-          ? null
-          : price(canonicalNumber(localIntro), currency, location),
+      intro: intro === null ? null : price(intro, currency, location),
       renewal: price(canonicalNumber(localRenewal), currency, location),
       introPeriods: periods === undefined ? null : Number(periods),
       reportedIntroCny,
