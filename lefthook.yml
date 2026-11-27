@@ -1,7 +1,7 @@
 pre-commit:
   commands:
     biome:
-      glob: "*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,jsonc,css,astro}"
+      glob: "*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,jsonc,css,astro,md,yaml,yml}"
       run: pnpm exec biome check --no-errors-on-unmatched -- {staged_files}
 
 commit-msg:
