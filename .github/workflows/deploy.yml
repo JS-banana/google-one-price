@@ -10,9 +10,6 @@ on:
 permissions:
   contents: read
 
-env:
-  pnpm_config_allow_builds: '{"lefthook":true,"esbuild":false,"workerd":false}'
-
 jobs:
   check:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'

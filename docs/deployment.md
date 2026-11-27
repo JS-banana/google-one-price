@@ -18,7 +18,7 @@ GitHub Actions 从已提交的 JSON 快照生成 Astro 静态站点，使用 Wra
 4. 将这两份 workflow 合入默认分支 `main`。`main` 的 push CI 通过后，Deploy 会重新构建同一提交并发布。也可以在 Actions → Deploy → Run workflow 选择 `main`，手动运行同一套 CI 检查后部署。生产部署串行执行，发布前会确认待发提交仍是 `main` 最新提交。
 5. 部署完成后，核对首页数据更新时间、`/matrix` 和一个国家详情页。检查 `/matrix/` 会跳转到 `/matrix`，不存在的路径返回自定义 404。[生产站点](https://googleone.laifuyou.com)
 
-仓库在安装时启用 Lefthook，`esbuild` 和 `workerd` 使用依赖自带的平台二进制。CI 通过 `pnpm_config_allow_builds` 跳过后二者的安装脚本，本地命令见 [README](../README.zh-CN.md#快速开始)。
+仓库在安装时启用 Lefthook，`esbuild` 和 `workerd` 使用依赖自带的平台二进制。`pnpm-workspace.yaml` 的 `allowBuilds` 显式跳过后二者的安装脚本，本地与 CI 行为一致。
 
 ## 本地手动部署
 

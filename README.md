@@ -16,7 +16,6 @@ Compare Google One and Gemini subscriptions across 60 iOS App Store markets with
 Use Node.js 22 and the pinned pnpm version. [.nvmrc](.nvmrc) · [package.json](package.json)
 
 ```sh
-export pnpm_config_allow_builds='{"lefthook":true,"esbuild":false,"workerd":false}'
 pnpm install --frozen-lockfile
 pnpm dev
 pnpm test

@@ -16,7 +16,6 @@
 使用仓库锁定的 Node.js 22 和 pnpm 版本。[.nvmrc](.nvmrc) · [package.json](package.json)
 
 ```sh
-export pnpm_config_allow_builds='{"lefthook":true,"esbuild":false,"workerd":false}'
 pnpm install --frozen-lockfile
 pnpm dev
 pnpm test

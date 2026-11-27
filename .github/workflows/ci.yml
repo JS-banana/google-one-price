@@ -8,10 +8,6 @@ on:
 permissions:
   contents: read
 
-env:
-  # The optional platform packages already supply both native binaries.
-  pnpm_config_allow_builds: '{"lefthook":true,"esbuild":false,"workerd":false}'
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
