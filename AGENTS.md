@@ -32,3 +32,8 @@
 - Excel 使用仍在发布更新的 `read-excel-file` 读取，本次安装的依赖树通过了高危漏洞审计。[项目发布记录](https://github.com/catamphetamine/read-excel-file/blob/master/CHANGELOG.md)
 - 原始明细和汇率提供报价事实，变动页提供独立日志。每次导入先验证结构和数据，再原子替换快照。生成 JSON 的序列化由导入程序负责。
 - 页面通过 `src/lib/data/index.ts` 读取快照。排名和矩阵从活跃明细派生，历史明细保留其原币和来源，对账只读 Excel 的派生页。
+
+## 部署与发布
+
+- `main` 上的 CI 通过后，GitHub Actions 将 Astro 产物发布到 Cloudflare Workers 静态资源。CI 从已提交的 JSON 快照构建。
+- 使用 `pnpm build` 和 `pnpm cf:dry` 验证部署配置。首次配置、手动部署、缓存和回滚见 [部署说明](docs/deployment.md)。
