@@ -15,7 +15,12 @@ const paymentMethodSchema = z.enum([
   "gift-card",
   "app-store-card",
 ]);
-const giftCardSchema = z.enum(["official", "none", "unknown"]);
+const giftCardSchema = z.enum([
+  "apple-gift-card",
+  "app-store-card",
+  "none",
+  "unknown",
+]);
 const accessSchema = z.enum(["easy", "local-only", "unknown"]);
 
 type PaymentMethod = z.infer<typeof paymentMethodSchema>;
@@ -25,7 +30,7 @@ export function derivePaymentAccess(
   giftCard: z.infer<typeof giftCardSchema>,
   paymentMethods: readonly PaymentMethod[],
 ): PaymentAccess {
-  if (giftCard === "official" || paymentMethods.includes("app-store-card")) {
+  if (giftCard === "apple-gift-card" || giftCard === "app-store-card") {
     return "easy";
   }
   if (
@@ -52,11 +57,21 @@ const countryMetaEntrySchema = reviewSchema
   )
   .refine(
     ({ giftCard, paymentMethods }) =>
-      (giftCard === "official") === paymentMethods.includes("gift-card"),
+      giftCard !== "none" || paymentMethods.length > 0,
     {
       path: ["paymentMethods"],
-      message:
-        "The gift-card method must match confirmed Apple Gift Card support",
+      message: "Missing payment evidence when no gift card is listed",
+    },
+  )
+  .refine(
+    ({ giftCard, paymentMethods }) =>
+      (giftCard === "apple-gift-card") ===
+        paymentMethods.includes("gift-card") &&
+      (giftCard === "app-store-card") ===
+        paymentMethods.includes("app-store-card"),
+    {
+      path: ["paymentMethods"],
+      message: "Gift card payment methods must match the listed gift card type",
     },
   )
   .refine(

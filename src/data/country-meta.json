@@ -1,7 +1,7 @@
 [
   {
     "code": "ARE",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -26,7 +26,7 @@
   },
   {
     "code": "AUS",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "paypal",
@@ -49,7 +49,7 @@
   },
   {
     "code": "BRA",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -64,7 +64,7 @@
   },
   {
     "code": "CAN",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "paypal",
@@ -78,7 +78,7 @@
   },
   {
     "code": "CHE",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -118,7 +118,7 @@
   },
   {
     "code": "DEU",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "paypal",
@@ -135,7 +135,7 @@
   },
   {
     "code": "DNK",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -167,7 +167,7 @@
   },
   {
     "code": "GBR",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "paypal",
@@ -202,7 +202,7 @@
   },
   {
     "code": "HKG",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -243,7 +243,7 @@
   },
   {
     "code": "IND",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": [
       "card",
       "bank-payment",
@@ -274,7 +274,7 @@
   },
   {
     "code": "JPN",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -355,7 +355,7 @@
   },
   {
     "code": "MEX",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": [
       "card",
       "paypal",
@@ -394,7 +394,7 @@
   },
   {
     "code": "NOR",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -418,7 +418,7 @@
   },
   {
     "code": "NZL",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -426,7 +426,7 @@
       "app-store-card"
     ],
     "access": "easy",
-    "notes": "Apple 列出的余额兑换方式为 App Store Card，当地条款将该卡的使用范围限定在 Apple 媒体服务。",
+    "notes": "付款清单将可兑换的卡列为 App Store Card。当地条款将 Apple Gift Card 纳入礼品卡定义，并说明 Wallet 中的账户余额虚拟卡可用于 Apple 零售店。",
     "sources": [
       "https://support.apple.com/en-us/111741#asiapacific",
       "https://www.apple.com/nz/legal/internet-services/itunes/giftcards/nz/terms.html"
@@ -467,7 +467,7 @@
   },
   {
     "code": "POL",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -504,7 +504,7 @@
   },
   {
     "code": "SAU",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": ["card", "carrier", "account-balance", "app-store-card"],
     "access": "easy",
     "sources": ["https://support.apple.com/en-us/111741#middleeast"],
@@ -533,7 +533,7 @@
   },
   {
     "code": "SWE",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -552,6 +552,7 @@
     "giftCard": "none",
     "paymentMethods": ["card", "carrier", "local-wallet"],
     "access": "local-only",
+    "notes": "付款清单未列礼品卡兑换。当地 Apple Store Gift Card 条款适用于硬件零售，并明确排除 App Store 和 iTunes。",
     "sources": [
       "https://support.apple.com/en-us/111741#asiapacific",
       "https://www.apple.com/legal/giftcards/applestore/th-en/"
@@ -568,7 +569,7 @@
   },
   {
     "code": "TUR",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": ["card", "carrier", "account-balance", "app-store-card"],
     "access": "easy",
     "notes": "Apple 列出的余额兑换方式为 App Store & iTunes Gift Card。",
@@ -577,7 +578,7 @@
   },
   {
     "code": "TWN",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": [
       "card",
       "apple-pay",
@@ -611,7 +612,7 @@
   },
   {
     "code": "USA",
-    "giftCard": "official",
+    "giftCard": "apple-gift-card",
     "paymentMethods": [
       "card",
       "paypal",
@@ -637,7 +638,7 @@
   },
   {
     "code": "VNM",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": [
       "card",
       "local-wallet",
@@ -651,9 +652,10 @@
   },
   {
     "code": "ZAF",
-    "giftCard": "none",
+    "giftCard": "app-store-card",
     "paymentMethods": ["card", "carrier", "account-balance", "app-store-card"],
     "access": "easy",
+    "notes": "付款清单列出 App Store & iTunes 礼品卡兑换及直接充值。当地账户余额条款只说明通过 Add Funds 充值的流程。",
     "sources": [
       "https://support.apple.com/en-us/111741#africa",
       "https://www.apple.com/legal/internet-services/itunes/giftcards/za/terms.html"

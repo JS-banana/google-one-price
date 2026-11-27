@@ -15,7 +15,10 @@
           "Gmail、Drive 和相册共用存储池。",
           "符合资格的成员可使用部分 Gemini、Gemini Notebook 和 Google Flow 权益。部分 AI 用量由全组共用。"
         ],
-        "managerOnlyBenefits": ["Google Colab 和套餐升降级。"]
+        "managerOnlyBenefits": [
+          "Google Colab 和套餐升降级。",
+          "符合资格的套餐管理员可就指定 Google Store 商品获商店余额返还，400 GB 档为 3%，2 TB 档为 10%。"
+        ]
       },
       "appleSubscription": {
         "manage": "从购买时的 Apple 账户进入 iOS「设置 → 姓名 → 订阅」，选原购买应用的订阅查看可选套餐。",
@@ -27,6 +30,7 @@
       ],
       "sources": [
         "https://support.google.com/googleone/answer/16882689?hl=en",
+        "https://support.google.com/googleone/answer/9003266?co=GENIE.Platform%3DiOS&hl=en",
         "https://one.google.com/about/google-ai-plans/",
         "https://gemini.google/subscriptions/",
         "https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en",
@@ -52,7 +56,8 @@
         ],
         "managerOnlyBenefits": [
           "在符合资格的市场，YouTube Premium Lite 是个人权益。",
-          "Google Home Premium、Google Developer Program 高级权益、Google Colab 和购买额外 AI credits。"
+          "Google Home Premium、Google Developer Program 高级权益、Google Colab 和购买额外 AI credits。",
+          "符合资格的套餐管理员购买指定 Google Store 商品可获 10% 商店余额返还。"
         ]
       },
       "appleSubscription": {
@@ -65,6 +70,7 @@
       ],
       "sources": [
         "https://support.google.com/googleone/answer/14534406?hl=en",
+        "https://support.google.com/googleone/answer/9003266?co=GENIE.Platform%3DiOS&hl=en",
         "https://one.google.com/about/google-ai-plans/",
         "https://gemini.google/subscriptions/",
         "https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en",
@@ -90,7 +96,8 @@
           "Google 的套餐说明列出部分市场的 YouTube Premium 家庭权益，要求家庭组管理员购买且成员同住。"
         ],
         "managerOnlyBenefits": [
-          "Google Home Premium、Google Developer Program 高级权益、Google Colab 和购买额外 AI credits。"
+          "Google Home Premium、Google Developer Program 高级权益、Google Colab 和购买额外 AI credits。",
+          "符合资格的套餐管理员购买指定 Google Store 商品可获 10% 商店余额返还。"
         ]
       },
       "appleSubscription": {
@@ -103,6 +110,7 @@
       ],
       "sources": [
         "https://support.google.com/googleone/answer/16286513?hl=en",
+        "https://support.google.com/googleone/answer/9003266?co=GENIE.Platform%3DiOS&hl=en",
         "https://one.google.com/about/google-ai-plans/",
         "https://one.google.com/about/plans",
         "https://gemini.google/subscriptions/",
@@ -126,7 +134,7 @@
           "支持共享的档位可共用 Gmail、Drive 和相册的存储池。"
         ],
         "managerOnlyBenefits": [
-          "符合资格时，Google Store 消费返还仅适用于套餐管理员。"
+          "符合资格的 200 GB 套餐管理员购买指定 Google Store 商品可获 3% 商店余额返还。"
         ]
       },
       "appleSubscription": {
@@ -139,6 +147,7 @@
       ],
       "sources": [
         "https://support.google.com/googleone/answer/9004013?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.google.com/googleone/answer/9003266?co=GENIE.Platform%3DiOS&hl=en",
         "https://one.google.com/about/plans",
         "https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en",
         "https://support.google.com/googleone/answer/9003633?co=GENIE.Platform%3DiOS&hl=en",

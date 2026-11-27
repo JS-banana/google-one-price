@@ -6,7 +6,14 @@
 
 `src/data/country-meta.json` 按三字母市场码 `code` 关联 `snapshot.json`，每区一条。`sources` 是可公开查阅的官方链接，`notes` 可补充付款限制或证据差异。
 
-`giftCard` 专指可兼用于 Apple Store 与 App Store 的通用 **Apple Gift Card**。`official` 表示 Apple 明确列出该卡可兑换账户余额。`none` 表示 Apple 列出了该市场的付款方式，其中没有这种通用卡。`unknown` 表示公开资料不足以确认。分级同时考虑旧版 App Store 礼品卡。
+`giftCard` 按 Apple 付款清单区分可兑换为账户余额的礼品卡。
+
+| `giftCard`        | 含义                                                    |
+| ----------------- | ------------------------------------------------------- |
+| `apple-gift-card` | 通用 Apple Gift Card，可用于 Apple Store 和 App Store。 |
+| `app-store-card`  | App Store Card 或 App Store & iTunes Gift Card。        |
+| `none`            | Apple 列出了该市场的付款方式，其中没有可兑换的礼品卡。  |
+| `unknown`         | 公开资料不足以确认礼品卡类型。                          |
 
 | `paymentMethods`  | Apple 付款清单中的类别                                                   |
 | ----------------- | ------------------------------------------------------------------------ |
@@ -23,9 +30,9 @@
 
 ## 分级规则
 
-按以下顺序应用 `derivePaymentAccess`。旧版 App Store 卡同样可以兑换 App Store 余额，因此分级与通用 Apple Gift Card 一致。
+按以下顺序应用 `derivePaymentAccess`。
 
-1. `giftCard` 为 `official`，或 `paymentMethods` 含 `app-store-card` 时，分为 `easy`。
+1. `giftCard` 为 `apple-gift-card` 或 `app-store-card` 时，分为 `easy`。付款方式须包含对应卡型和 `account-balance`。
 2. `giftCard` 为 `none`，且有账户余额以外的付款方式时，分为 `local-only`。用户需具备该区接受的方式，个别卡片或钱包的资格仍由 Apple 和付款机构判定。
 3. 其余情况分为 `unknown`，包括市场未列出或只有余额证据。
 
@@ -33,7 +40,11 @@
 
 ## 产品权益与来源
 
-`src/data/products.json` 的 `products` 使用报价数据已有的 `plus`、`pro`、`ultra`、`storage` 产品线键。`storageGb` 记录公开确认的套餐容量，按 1 TB = 1,000 GB 记。`familySharing.maxAdditionalMembers` 不含套餐持有人，`excludedStorageGb` 标记该产品线中不支持共享的容量档位。`familyGroup` 单独记录 Google 家庭组的居住地条件、人数上限和换组限制。`null` 表示该字段未确认，详见记录内的 `notes`。产品线事实的适用范围以 Google 公布的套餐为准，订阅方和权益以实际购买页确认。
+`src/data/products.json` 的 `products` 使用报价数据已有的 `plus`、`pro`、`ultra`、`storage` 产品线键。`storageGb` 记录 Google 公开确认的套餐容量，按 1 TB = 1,000 GB 记。例如，`products.storage.storageGb` 记录 30、100、200 GB 纯存储方案。报价档位 `tiers` 按快照中的 iOS SKU 组织排名和矩阵，`storage` 组包含 10 TB 和 20 TB 报价。页面可用 `tiers` 展示报价档位，用 `storageGb` 说明公开套餐容量。单个 SKU 的实际容量和权益以购买页为准。[报价档位定义](../src/lib/data/tiers.ts)
+
+`familySharing.maxAdditionalMembers` 不含套餐持有人，`excludedStorageGb` 标记 `storageGb` 中不支持共享的容量档位。`familyGroup` 单独记录 Google 家庭组的居住地条件、人数上限和换组限制。`null` 表示该字段未确认，详见记录内的 `notes`。
+
+Google Store 购买返还以商店余额发放，适用于美国、加拿大、英国、德国和澳大利亚符合资格的付费套餐管理员购买指定商品。[Google One 权益说明](https://support.google.com/googleone/answer/9003266?co=GENIE.Platform%3DiOS&hl=en)
 
 - Apple 以按地区列出的 Apple Account 付款方式为主，地区条款和本地支持页用于核实卡型、兑换范围或冲突。[Apple 付款清单](https://support.apple.com/en-us/111741) · [Apple 添加付款方式](https://support.apple.com/en-us/118429) · [Apple 礼品卡条款](https://www.apple.com/legal/internet-services/itunes/giftcards/)
 - Google 以帮助中心的方案、共享说明和 iOS 管理方式为主，与公开套餐页交叉核对。[Google One 套餐](https://one.google.com/about/plans) · [Google AI 套餐](https://one.google.com/about/google-ai-plans/) · [Gemini 套餐](https://gemini.google/subscriptions/) · [Google One 家庭共享](https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en) · [Google 家庭组规则](https://support.google.com/families/answer/6317858?hl=en) · [Gemini iOS 订阅管理](https://support.google.com/gemini/answer/14517446?co=GENIE.Platform%3DiOS&hl=en)

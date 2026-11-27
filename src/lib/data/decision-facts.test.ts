@@ -1,3 +1,5 @@
+import { globSync, readFileSync } from "node:fs";
+import { parseFrontmatter } from "astro/markdown";
 import { describe, expect, it } from "vitest";
 import countryMeta from "../../data/country-meta.json" with { type: "json" };
 import productFacts from "../../data/products.json" with { type: "json" };
@@ -24,16 +26,23 @@ describe("country payment metadata", () => {
 
   it("derives access from both kinds of redeemable cards and other methods", () => {
     expect(
-      derivePaymentAccess("official", ["gift-card", "account-balance"]),
+      derivePaymentAccess("apple-gift-card", ["gift-card", "account-balance"]),
     ).toBe("easy");
     expect(
-      derivePaymentAccess("none", ["app-store-card", "account-balance"]),
+      derivePaymentAccess("app-store-card", [
+        "app-store-card",
+        "account-balance",
+      ]),
     ).toBe("easy");
     expect(derivePaymentAccess("none", ["card", "account-balance"])).toBe(
       "local-only",
     );
     expect(derivePaymentAccess("none", ["account-balance"])).toBe("unknown");
     expect(derivePaymentAccess("unknown", ["card"])).toBe("unknown");
+    expect(getCountryMeta("BRA")).toMatchObject({
+      giftCard: "app-store-card",
+      access: "easy",
+    });
     expect(getCountryMeta("BGD")?.access).toBe("unknown");
   });
 
@@ -59,7 +68,10 @@ describe("country payment metadata", () => {
     for (const overrides of [
       { paymentMethods: ["unlisted"] },
       { giftCard: "existing" },
-      { giftCard: "none" },
+      { giftCard: "none", paymentMethods: [], access: "unknown" },
+      { giftCard: "app-store-card" },
+      { paymentMethods: ["app-store-card", "account-balance"] },
+      { paymentMethods: ["gift-card"] },
       { access: "local-only" },
       { sources: [] },
       { reviewedAt: "2026-02-30" },
@@ -72,7 +84,7 @@ describe("country payment metadata", () => {
   });
 });
 
-describe("product facts and guide metadata", () => {
+describe("product facts", () => {
   it("exposes all four product lines and the Google family group rules", () => {
     const products = getProducts();
     expect(Object.keys(products).sort()).toEqual(
@@ -93,6 +105,25 @@ describe("product facts and guide metadata", () => {
     ).toBe(false);
   });
 
+  it("rejects duplicate or unlisted storage exclusions", () => {
+    const { storage } = productFacts.products;
+    for (const excludedStorageGb of [[30, 30], [20000]]) {
+      const result = productsSchema.safeParse({
+        ...productFacts,
+        products: {
+          ...productFacts.products,
+          storage: {
+            ...storage,
+            familySharing: { ...storage.familySharing, excludedStorageGb },
+          },
+        },
+      });
+      expect(result.success).toBe(false);
+    }
+  });
+});
+
+describe("guide metadata", () => {
   it("requires a guide's title, summary, order, review date and source URLs", () => {
     const guide = {
       title: "续费、调价与取消",
@@ -109,5 +140,24 @@ describe("product facts and guide metadata", () => {
       guideFrontmatterSchema.safeParse({ ...guide, sources: ["apple"] })
         .success,
     ).toBe(false);
+  });
+
+  it("validates each Markdown guide, requires a body and rejects duplicate orders", () => {
+    const directory = new URL("../../content/guide/", import.meta.url);
+    const files = globSync("*.md", { cwd: directory });
+    expect(files.length).toBeGreaterThan(0);
+    const orders = new Set<number>();
+
+    for (const file of files) {
+      const { frontmatter, content } = parseFrontmatter(
+        readFileSync(new URL(file, directory), "utf8"),
+      );
+      const { order } = guideFrontmatterSchema.parse(frontmatter);
+      expect(content.trim(), file).not.toBe("");
+      expect(orders.has(order), `Duplicate order ${order} in ${file}`).toBe(
+        false,
+      );
+      orders.add(order);
+    }
   });
 });
