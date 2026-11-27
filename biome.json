@@ -9,7 +9,7 @@
     "indentStyle": "space"
   },
   "files": {
-    "includes": ["**", "!src/data/snapshot.json"]
+    "includes": ["**", "!src/data/snapshot.json", "!public/flags"]
   },
   "html": {
     "experimentalFullSupportEnabled": true,

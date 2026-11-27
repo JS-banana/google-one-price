@@ -1,0 +1,135 @@
+---
+import CountryLabel from "../../components/CountryLabel.astro";
+import Layout from "../../components/Layout.astro";
+import SearchInput from "../../components/SearchInput.astro";
+import {
+  getCountries,
+  getCountryAdvantages,
+  getTierRanking,
+  regions,
+} from "../../lib/data";
+import { formatCny } from "../../lib/format";
+
+const countries = getCountries();
+const counts = new Map(
+  countries.map(({ code }) => [
+    code,
+    getCountryAdvantages(code).filter(({ rank }) => rank === 1).length,
+  ]),
+);
+const pro = getTierRanking("ai-pro-monthly", "year")[0];
+const countryName = countries.find(
+  ({ code }) => code === pro.quote.countryCode,
+)?.nameZh;
+const title = "国家/地区";
+const description = `浏览 ${countries.length} 个国家/地区的 Google One 与 Gemini iOS 报价。AI Pro 原价月付当前最低为${countryName} ${formatCny(pro.price)}，可按地区或货币查找。`;
+---
+
+<Layout {title} {description}>
+  <div class="page-heading">
+    <h1>国家/地区</h1>
+    <SearchInput
+      id="country-q"
+      label="筛选国家或地区"
+      placeholder="搜索国家、地区或币种"
+      target="country-directory"
+    />
+  </div>
+  <div id="country-directory">
+    {regions.map((region, index) => {
+      const group = countries
+        .filter((country) => country.region === region)
+        .sort((a, b) => a.nameZh.localeCompare(b.nameZh, "zh-CN"));
+      return (
+        <section class="directory-section" data-filter-group>
+          <h2 class="section-heading">{region}</h2>
+          <ul class="country-grid panel">
+            {group.map((country) => {
+              const { code, currency, nameZh, nameEn, iso2 } = country;
+              const firsts = counts.get(code) ?? 0;
+              return (
+                <li
+                  data-match={`${nameZh} ${nameEn} ${code} ${iso2} ${currency}`}
+                >
+                  <a href={`/countries/${code.toLowerCase()}`}>
+                    <CountryLabel
+                      {country}
+                      showUsd={false}
+                      eager={index === 0}
+                    />
+                    <span class="locale-codes mono small muted">
+                      {code} · {currency}
+                    </span>
+                    {firsts > 0 && (
+                      <span class="badge best small">
+                        最低 <span class="mono">×{firsts}</span>
+                      </span>
+                    )}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      );
+    })}
+    <p class="empty-message" data-filter-empty hidden>
+      找不到符合条件的国家/地区。
+    </p>
+  </div>
+</Layout>
+<style>
+.directory-section + .directory-section {
+  margin-top: 20px;
+}
+.country-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+}
+.country-grid li {
+  box-shadow:
+    1px 0 var(--border-default),
+    0 1px var(--border-default);
+}
+.country-grid a {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 7px;
+  align-items: center;
+  min-height: 38px;
+  padding: 7px 10px;
+  text-decoration: none;
+}
+.country-grid li:hover {
+  background: var(--bg-hover);
+}
+.country-grid a:focus-visible {
+  outline-offset: -2px;
+}
+.locale-codes {
+  margin-inline-start: auto;
+  white-space: nowrap;
+}
+@media (max-width: 1023px) {
+  .country-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .country-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .country-grid a {
+    padding: 5px 8px;
+    min-height: 55px;
+    align-content: center;
+  }
+  .locale-codes {
+    margin-inline-start: 24px;
+  }
+  .country-grid .country-label {
+    flex-basis: 100%;
+  }
+}
+</style>

@@ -1,0 +1,253 @@
+---
+import Layout from "../components/Layout.astro";
+import SearchInput from "../components/SearchInput.astro";
+import { getCountries, getExchangeRates, getMetadata } from "../lib/data";
+import { formatRate, formatShanghaiTime } from "../lib/format";
+
+const rates = getExchangeRates();
+const countries = getCountries();
+const { usdToCny, fxProvider, fxPublishedAt, refreshedAt } = getMetadata();
+const title = "汇率与价格说明";
+const description = `查看 ${rates.length} 种币种的人民币折算，当前 1 USD = ${formatRate(usdToCny)} CNY。了解 Google One 与 Gemini iOS 首期、首年月均、续费及 USD 计价区的口径。`;
+---
+
+<Layout {title} {description}>
+  <div class="page-heading"><h1>汇率与说明</h1></div>
+  <section aria-labelledby="calculation">
+    <h2 class="section-heading" id="calculation">价格口径</h2>
+    <dl class="method-list">
+      <div>
+        <dt>报价来源与更新</dt>
+        <dd>
+          数据来自 iOS App Store
+          商品目录监控，按小时检查。当前报价快照为北京时间
+          <time datetime={`${refreshedAt}+08:00`}
+            >{formatShanghaiTime(refreshedAt)}</time
+          >。
+        </dd>
+      </div>
+      <div>
+        <dt>人民币换算</dt>
+        <dd>
+          原币金额 × USD/CNY ÷ 1 USD
+          兑换的原币数量。显示金额保留两位小数，排名使用舍入前的价格。
+        </dd>
+      </div>
+      <div>
+        <dt>首期月价</dt>
+        <dd>
+          优惠期间每月的人民币价格。无优惠时取续费原价，零元的首期显示「免费」。
+        </dd>
+      </div>
+      <div>
+        <dt>首年月均</dt>
+        <dd>
+          （首期月价 × 优惠月数 + 续费月价 × 首年剩余月数）÷ 12。年付以 12
+          个月为一个账期，年价除以 12 后参与比较。
+        </dd>
+      </div>
+      <div>
+        <dt>续费月价</dt>
+        <dd>
+          优惠结束后每月折合的人民币价格。原币副价保留 App Store 的实际账期。
+        </dd>
+      </div>
+      <div>
+        <dt>活跃／历史快照</dt>
+        <dd>
+          活跃报价来自当前目录或监控结果，参与排名。历史快照保留当时的币种和报价，可在国家页面展开。
+        </dd>
+      </div>
+      <div>
+        <dt>USD 计价区</dt>
+        <dd>
+          美国以外使用 USD 标价的 App Store 地区。档位排名和矩阵可筛掉这些地区。
+        </dd>
+      </div>
+      <div>
+        <dt>续费跳涨</dt>
+        <dd>
+          跳涨倍数 = 续费原币价 ÷
+          首期原币价。零元试用直接展示试用结束后的月均续费价。
+        </dd>
+      </div>
+    </dl>
+  </section>
+  <section class="rates-section" aria-labelledby="fx">
+    <div class="section-heading rates-heading">
+      <div>
+        <h2 id="fx">汇率表</h2>
+        <p class="secondary">
+          基准
+          <strong class="mono">1 USD = {formatRate(usdToCny)} CNY</strong> ·
+          {fxProvider} 发布于
+          <time datetime={fxPublishedAt}
+            >{formatShanghaiTime(fxPublishedAt)}</time
+          >（北京时间）
+        </p>
+      </div>
+      <SearchInput
+        id="rate-q"
+        label="筛选币种或地区"
+        placeholder="搜索币种或地区"
+        target="rate-list"
+      />
+    </div>
+    <div class="panel" id="rate-list">
+      <table class="data-table rate-table">
+        <thead>
+          <tr>
+            <th scope="col">币种</th>
+            <th scope="col">中文名</th>
+            <th scope="col" class="num">1 USD 兑本币</th>
+            <th scope="col" class="num">1 本币折 CNY</th>
+            <th scope="col">地区</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rates.map(({ currency, nameZh, unitsPerUsd }) => {
+            const locales = countries.filter(
+              (country) => country.currency === currency,
+            );
+            return (
+              <tr
+                data-match={`${currency} ${nameZh} ${locales.map(({ code, nameZh, nameEn }) => `${code} ${nameZh} ${nameEn}`).join(" ")}`}
+              >
+                <th scope="row" class="mono rate-currency">
+                  {currency}
+                  <span class="rate-mobile-name">{nameZh}</span>
+                </th>
+                <td class="rate-name">{nameZh}</td>
+                <td class="num">{formatRate(unitsPerUsd)}</td>
+                <td class="num">{formatRate(usdToCny / unitsPerUsd)}</td>
+                <td class="rate-locales">
+                  {locales.length === 0 ? (
+                    <span class="muted">·</span>
+                  ) : (
+                    locales.map(({ code, nameZh }) => (
+                      <a href={`/countries/${code.toLowerCase()}`}>{nameZh}</a>
+                    ))
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p class="empty-message" data-filter-empty hidden>
+        找不到符合条件的币种。
+      </p>
+    </div>
+  </section>
+  <section class="rates-section" aria-labelledby="faq">
+    <h2 class="section-heading" id="faq">常见问题</h2>
+    <dl class="method-list">
+      <div>
+        <dt>为什么同一地区有多个相近的 SKU？</dt>
+        <dd>
+          同一套餐可能通过多个商品编号上架。每个档位按当前口径为每个地区选一条最低活跃报价，国家详情保留各
+          SKU。
+        </dd>
+      </div>
+      <div>
+        <dt>最低价能直接购买吗？</dt>
+        <dd>
+          订阅和优惠资格由你的 App Store
+          地区、账户及商品条款决定。请在确认付款前核对实际金额、续费日期和税费。
+        </dd>
+      </div>
+    </dl>
+  </section>
+  <section class="rates-section disclaimer" aria-labelledby="terms">
+    <h2 class="section-heading" id="terms">免责声明</h2>
+    <p>
+      本站是独立的价格查询工具，与 Google 和 Apple
+      无隶属、合作或授权关系。数据为监控时点的 App Store
+      报价及汇率折算，仅供参考。实际可购买的档位、优惠资格、税费、汇率与扣款金额以你的
+      App Store 付款确认页及付款机构为准。
+    </p>
+    <p id="data-license">
+      数据使用：原始商品信息及商标归各权利人所有，使用须遵循各来源条款。本站的整理及人民币换算供查询参考。
+    </p>
+  </section>
+</Layout>
+<style>
+.method-list {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+}
+.method-list > div {
+  display: grid;
+  grid-template-columns: minmax(125px, 1fr) 6fr;
+  gap: 8px 16px;
+  padding: 8px 12px;
+}
+.method-list > div + div {
+  border-top: 1px solid var(--border-default);
+}
+.method-list dt {
+  font-weight: 600;
+}
+.method-list dd,
+.disclaimer p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 22px;
+}
+.rates-section {
+  margin-top: 22px;
+}
+.rates-heading {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.rates-heading h2 {
+  margin-bottom: 3px;
+}
+.rate-currency {
+  text-align: left;
+}
+.rate-mobile-name {
+  display: none;
+}
+.rate-table td.num,
+.rate-table th.num {
+  white-space: nowrap;
+}
+.rate-table tr:hover td,
+.rate-table tr:hover th[scope="row"] {
+  background: var(--bg-hover);
+}
+.rate-locales a {
+  display: inline-block;
+  margin-right: 8px;
+}
+.disclaimer p + p {
+  margin-top: 6px;
+}
+@media (max-width: 767px) {
+  .method-list > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .rate-table th,
+  .rate-table td {
+    padding-inline: 5px;
+  }
+  .rate-name,
+  .rate-table :where(thead) th:where(:nth-child(2)) {
+    display: none;
+  }
+  .rate-mobile-name {
+    display: block;
+    color: var(--text-secondary);
+    font: 11px / 15px var(--font-ui);
+  }
+  .rate-table td,
+  .rate-table th {
+    font-size: 11px;
+  }
+}
+</style>

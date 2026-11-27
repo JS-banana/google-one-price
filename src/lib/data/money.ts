@@ -7,7 +7,7 @@ export const priceViews = ["intro", "year", "renew"] as const;
 export type PriceView = (typeof priceViews)[number];
 export type PricedQuote = Pick<
   Quote | Change,
-  "skuId" | "currency" | "intro" | "introPeriods" | "renewal"
+  "skuId" | "currency" | "description" | "intro" | "introPeriods" | "renewal"
 >;
 
 export function toPrice(
@@ -27,8 +27,9 @@ export function toPrice(
 
 export function billingMonths(
   period: Sku["billingPeriod"] | undefined,
+  description = "",
 ): 1 | 12 {
-  return period === "P1Y" ? 12 : 1;
+  return period === "P1Y" || (!period && description.includes("年付")) ? 12 : 1;
 }
 
 export function introPrice(quote: Pick<Quote, "intro" | "renewal">): Price {
@@ -50,7 +51,7 @@ export function createPricing(
     const unitsPerUsd = rates.get(quote.currency);
     if (unitsPerUsd === undefined)
       throw new Error(`Missing exchange rate for ${quote.currency}`);
-    const months = billingMonths(periods.get(quote.skuId));
+    const months = billingMonths(periods.get(quote.skuId), quote.description);
     const introMonths = Math.min(12, (quote.introPeriods ?? 0) * months);
     // Every monthly price shares a denominator of 12, including annual SKUs.
     const intro = new MoneyDecimal(introPrice(quote).local).times(12 / months);

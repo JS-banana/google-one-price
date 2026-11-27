@@ -10,7 +10,7 @@ export function resolveIntroPeriods(description: string, sku: Sku) {
   const stated = terms ? Number(terms[1] ?? terms[2]) : null;
   const encoded = duration
     ? (Number(duration[1]) * (duration[2] === "Y" ? 12 : 1)) /
-      billingMonths(sku.billingPeriod)
+      billingMonths(sku.billingPeriod, description)
     : null;
   return {
     periods:

@@ -1,0 +1,38 @@
+---
+import type { PriceView } from "../lib/data";
+import { formatCny } from "../lib/format";
+import type { PriceDisplay } from "../lib/price-display";
+
+interface Props {
+  display: PriceDisplay;
+  price: number;
+  view: PriceView;
+}
+const { display, price, view } = Astro.props;
+const label = formatCny(price, view, display.trial);
+---
+
+<div class="dual-price">
+  <button
+    type="button"
+    class="price-action"
+    data-price-detail
+    title={display.detail}
+    aria-label={`${label}，查看价格明细`}
+  >
+    <span class="mono amount">{label}</span>
+    {label !== "免费" && <span class="muted small">/月</span>}
+    {display.annual && <span class="annual muted small">年付</span>}
+  </button>
+  <div class:list={["price-sub small", { original: !display.offer }]}>
+    <span class="mono original">{display.raw}</span>
+    {display.offer && (
+      <span class="mono cny-offer-when-hidden">
+        {display.introCny} → {display.renewCny}
+      </span>
+    )}
+    {display.badge && (
+      <span class={`badge ${display.badge.level}`}>{display.badge.label}</span>
+    )}
+  </div>
+</div>

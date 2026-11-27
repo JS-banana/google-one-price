@@ -1,0 +1,122 @@
+---
+import { type Change, type Country, groupChanges, priceFor } from "../lib/data";
+import { formatCny } from "../lib/format";
+import { priceDisplay } from "../lib/price-display";
+import CountryLabel from "./CountryLabel.astro";
+import DualPrice from "./DualPrice.astro";
+
+interface Props {
+  changes: readonly Change[];
+  countries: ReadonlyMap<string, Country>;
+  limit?: number;
+}
+const { changes, countries, limit } = Astro.props;
+const groups = groupChanges(changes).slice(0, limit);
+---
+
+<div class="change-groups panel">
+  {groups.map(({ code, rows, summary }) => {
+    const country = countries.get(code);
+    if (!country) throw new Error(`Unknown country: ${code}`);
+    const newSkus = rows.every(({ kind }) => kind === "新发现地区SKU");
+    const id = `change-${code.toLowerCase()}`;
+    const label = `${newSkus ? "新发现" : "记录"} ${summary.count} ${newSkus ? "个 SKU" : "条变动"}`;
+    const trial =
+      summary.trials > 0 ? `（含 ${summary.trials} 个免费试用）` : "";
+    if (limit !== undefined) {
+      return (
+        <a class="recent-change" href={`/changes#${id}`}>
+          <CountryLabel {country} /> <span class="mono muted">{code}</span>
+          <span class="change-count">
+            · {label}
+            {trial}
+          </span>
+        </a>
+      );
+    }
+    return (
+      <details {id}>
+        <summary>
+          <CountryLabel {country} /> <span class="mono muted">{code}</span>
+          <span class="change-count">
+            · {label}
+            {trial}
+          </span>
+        </summary>
+        <ul>
+          {rows.map((quote) => (
+            <li class="change-item">
+              <div>
+                <p>{quote.description}</p>
+                <p class="mono muted small sku-id">{quote.skuId}</p>
+              </div>
+              <div class="change-price">
+                {quote.intro && (
+                  <span class="mono small">
+                    {formatCny(
+                      priceFor(quote, "intro"),
+                      "intro",
+                      quote.intro.local === 0,
+                    )}{" "}
+                    → {formatCny(priceFor(quote, "renew"))}/月
+                  </span>
+                )}
+                <DualPrice
+                  display={priceDisplay(quote)}
+                  price={priceFor(quote, "renew")}
+                  view="renew"
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </details>
+    );
+  })}
+</div>
+<style>
+:where(details) + details,
+:where(.recent-change) + .recent-change,
+.change-item {
+  border-top: 1px solid var(--border-default);
+}
+details {
+  scroll-margin-top: 64px;
+}
+.recent-change {
+  display: block;
+  text-decoration: none;
+}
+summary,
+.recent-change {
+  padding: 10px 12px;
+}
+summary:hover,
+.recent-change:hover {
+  background: var(--bg-hover);
+}
+summary .country-label {
+  vertical-align: -1px;
+}
+.change-count {
+  color: var(--text-secondary);
+}
+.change-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 8px;
+  padding: 8px 12px;
+}
+.sku-id {
+  overflow-wrap: anywhere;
+}
+.change-price {
+  text-align: right;
+}
+@media (max-width: 479px) {
+  .change-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+</style>

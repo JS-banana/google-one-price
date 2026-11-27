@@ -1,0 +1,38 @@
+---
+import { type Country, isUsdMarket } from "../lib/data";
+
+interface Props {
+  country: Country;
+  eager?: boolean;
+  large?: boolean;
+  flagOnly?: boolean;
+  showUsd?: boolean;
+}
+const {
+  country,
+  eager = false,
+  large = false,
+  flagOnly = false,
+  showUsd = true,
+} = Astro.props;
+const flag = `/flags/${country.iso2.toLowerCase()}.svg`;
+---
+
+<span class="country-label">
+  <img
+    src={flag}
+    class="flag"
+    width={large ? 24 : 18}
+    height={large ? 16 : 12}
+    alt=""
+    loading={eager ? "eager" : "lazy"}
+  >
+  {!flagOnly && (
+    <>
+      <span>{country.nameZh}</span>
+      {showUsd && isUsdMarket(country) && (
+        <span class="currency-badge">USD</span>
+      )}
+    </>
+  )}
+</span>

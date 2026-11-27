@@ -1,0 +1,81 @@
+---
+import Layout from "../components/Layout.astro";
+import Matrix from "../components/Matrix";
+import SearchInput from "../components/SearchInput.astro";
+import ViewBar from "../components/ViewBar.astro";
+import {
+  getComparisonMatrix,
+  getTierRanking,
+  isUsdMarket,
+  regions,
+  tierGroups,
+  tierIds,
+  tiers,
+} from "../lib/data";
+import { formatCny } from "../lib/format";
+import { type PriceDisplay, priceDisplay } from "../lib/price-display";
+import "../styles/matrix.css";
+
+const rows = getComparisonMatrix()
+  .map(({ country, cells }) => ({
+    country: { ...country, usd: isUsdMarket(country) },
+    cells: cells.map((variants) => {
+      if (!variants.some(Boolean)) return null;
+      const offers: PriceDisplay[] = [];
+      const indexes = new Map<string, number>();
+      const picks = variants.map((row) => {
+        if (!row) throw new Error(`Missing price view for ${country.code}`);
+        const known = indexes.get(row.quote.skuId);
+        if (known !== undefined) return known;
+        const index = offers.length;
+        indexes.set(row.quote.skuId, index);
+        offers.push(priceDisplay(row.quote));
+        return index;
+      });
+      return { offers, picks, ranks: variants.map((row) => row?.rank ?? 0) };
+    }),
+  }))
+  .sort((a, b) => a.country.nameZh.localeCompare(b.country.nameZh, "zh-CN"));
+const groups = tierGroups.map(({ line, name, ids }) => ({
+  name,
+  columns: ids.map((id) => ({
+    id,
+    name: tiers[id].name,
+    shortName: tiers[id].shortName,
+    pill: `${line === "pro" ? "Pro " : line === "plus" ? "Plus " : ""}${tiers[id].shortName}`,
+  })),
+}));
+const pro = getTierRanking("ai-pro-monthly", "year")[0];
+const lead = rows.find(({ country }) => country.code === pro.quote.countryCode)
+  ?.country.nameZh;
+const description = `比较 ${rows.length} 个国家/地区 × ${tierIds.length} 个档位的 Google One 与 Gemini iOS 价格。AI Pro 原价月付最低 ${lead} ${formatCny(pro.price)}，支持按首期、首年月均和续费排序。`;
+---
+
+<Layout title="全球订阅价格矩阵" {description} wide dataset>
+  <div class="page-heading">
+    <h1>价格矩阵</h1>
+    <p class="page-note small">
+      <span class="mono">{rows.length} × {tierIds.length}</span> · 国家/地区 ×
+      比较档位
+    </p>
+  </div>
+  <ViewBar>
+    <SearchInput
+      id="matrix-q"
+      label="搜索国家、地区或币种"
+      placeholder="搜索国家、地区或币种"
+      matrix
+    />
+    <label class="control"
+      ><input type="checkbox" data-matrix-filter="usd"> 隐藏 USD 计价区</label
+    >
+    <label class="control matrix-region">
+      <span class="sr-only">大区</span>
+      <select data-matrix-filter="region">
+        <option value="">全部大区</option>
+        {regions.map((region) => <option value={region}>{region}</option>)}
+      </select>
+    </label>
+  </ViewBar>
+  <Matrix client:load {rows} {groups} />
+</Layout>

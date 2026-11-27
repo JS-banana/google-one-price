@@ -138,3 +138,7 @@ export function getChanges(): readonly Change[] {
 export function getExchangeRates(): readonly ExchangeRate[] {
   return data.exchangeRates;
 }
+
+export function getQuoteCount(): number {
+  return data.quotes.length;
+}

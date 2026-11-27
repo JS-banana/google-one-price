@@ -1,0 +1,124 @@
+---
+import CountryLabel from "../../components/CountryLabel.astro";
+import CountrySkuTable from "../../components/CountrySkuTable.astro";
+import Layout from "../../components/Layout.astro";
+import {
+  type Country,
+  getCountries,
+  getCountryAdvantages,
+  getCountryQuotes,
+  getExchangeRates,
+  getMetadata,
+  isUsdMarket,
+  tiers,
+} from "../../lib/data";
+import { formatCny, formatRate } from "../../lib/format";
+
+export function getStaticPaths() {
+  return getCountries().map((country) => ({
+    params: { iso3: country.code.toLowerCase() },
+    props: { country },
+  }));
+}
+const { country } = Astro.props as { country: Country };
+const { code, nameZh, nameEn, currency } = country;
+const quotes = getCountryQuotes(code);
+const advantages = getCountryAdvantages(code).sort((a, b) => a.rank - b.rank);
+const lowestSkus = new Set(
+  advantages.filter(({ rank }) => rank === 1).map(({ quote }) => quote.skuId),
+);
+const fx = getExchangeRates().find((rate) => rate.currency === currency);
+if (!fx) throw new Error(`Missing exchange rate for ${currency}`);
+const cnyPerLocal = getMetadata().usdToCny / fx.unitsPerUsd;
+const active = quotes.filter(({ status }) => status === "active").length;
+const pro = quotes.find(
+  (quote) =>
+    quote.status === "active" && quote.skuId === "com.google.gemini.2tb.ai.m",
+);
+const best = advantages[0];
+const quoteSummary = best
+  ? `${tiers[best.id].name}首年月均 ${formatCny(best.price)}，全球第 ${best.rank}。`
+  : pro
+    ? `AI Pro 原价月付折合 ${formatCny(pro.renewal.cny)}。`
+    : "";
+const title = `${nameZh} Google One / Gemini iOS 订阅价格`;
+const description = `查看${nameZh}（${code}）的 ${active} 条在售 Google One 与 Gemini iOS 报价，原币为 ${currency}。${quoteSummary}`;
+---
+
+<Layout
+  {title}
+  {description}
+  crumbs={[
+    { name: "低价速查", href: "/" },
+    { name: "国家/地区", href: "/countries" },
+    { name: nameZh, href: `/countries/${code.toLowerCase()}` },
+  ]}
+>
+  <div class="page-heading country-header">
+    <div>
+      <p class="breadcrumb">
+        <a href="/countries">国家/地区</a> / <span class="mono">{code}</span>
+      </p>
+      <div class="country-identity">
+        <CountryLabel {country} large eager flagOnly />
+        <h1>{nameZh}</h1>
+        <span class="secondary">{nameEn}</span>
+        <span class="mono muted">{code} · {currency}</span>
+        {isUsdMarket(country) && <span class="currency-badge">USD 计价区</span>}
+      </div>
+    </div>
+    <p class="mono small secondary country-rates">
+      1 CNY = {formatRate(1 / cnyPerLocal)} {currency} · 1 {currency} = ¥{formatRate(
+        cnyPerLocal,
+      )}
+    </p>
+  </div>
+  {advantages.length > 0 && (
+    <section class="advantages" aria-label="全球排名优势">
+      <p>
+        按首年月均，<span class="mono">{lowestSkus.size}</span> 个档位全球最低，
+        <span class="mono">{advantages.length}</span> 个档位进入前 3。
+      </p>
+      <div class="pills">
+        {advantages.map(({ id, rank }) => (
+          <a
+            class:list={["control", { "best-text": rank === 1 }]}
+            href={`/tiers/${id}`}
+          >
+            {tiers[id].name} <span class="mono">#{rank}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+  <CountrySkuTable {quotes} {lowestSkus} />
+  <p class="matrix-link"><a href={`/matrix?q=${code}`}>在矩阵中查看 →</a></p>
+</Layout>
+<style>
+.country-header {
+  align-items: flex-end;
+}
+.country-identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.country-header,
+.advantages {
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 12px;
+}
+.advantages {
+  padding-bottom: 12px;
+}
+.advantages .pills {
+  margin-top: 6px;
+}
+.advantages .best-text {
+  color: var(--best);
+}
+.matrix-link {
+  margin-top: 16px;
+}
+</style>

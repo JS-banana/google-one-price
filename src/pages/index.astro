@@ -1,26 +1,69 @@
 ---
-import { getCountries, getMetadata } from "../lib/data";
-import "../styles/global.css";
+import AnswerStrip from "../components/AnswerStrip.astro";
+import ChangeGroups from "../components/ChangeGroups.astro";
+import Layout from "../components/Layout.astro";
+import TierCard from "../components/TierCard.astro";
+import ViewBar from "../components/ViewBar.astro";
+import {
+  getChanges,
+  getCountries,
+  getTierRanking,
+  tierGroups,
+  tierIds,
+} from "../lib/data";
+import { formatCny } from "../lib/format";
 
-const { refreshedAt, usdToCny } = getMetadata();
+const countries = new Map(
+  getCountries().map((country) => [country.code, country]),
+);
+const pro = getTierRanking("ai-pro-monthly", "year")[0];
+const title = "Google One / Gemini 全球 iOS 订阅低价速查";
+const description = `比较 ${countries.size} 个国家/地区的 ${tierIds.length} 个 Google One 与 Gemini iOS 档位。Google AI Pro 原价月付最低为${countries.get(pro.quote.countryCode)?.nameZh} ${formatCny(pro.price)}/月，含首期优惠与续费对照。`;
 ---
 
-<!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Google One / Gemini iOS 价格</title>
-  </head>
-  <body>
-    <main>
-      <h1>Google One / Gemini iOS 价格</h1>
-      <p>覆盖 {getCountries().length} 个国家和地区。</p>
-      <p>
-        数据刷新于
-        <time datetime={refreshedAt}>{refreshedAt.replace("T", " ")}</time>
-      </p>
-      <p>1 USD = {usdToCny} CNY</p>
-    </main>
-  </body>
-</html>
+<Layout {title} {description} dataset>
+  <div class="page-heading">
+    <h1>{title}</h1>
+    <p class="page-note small">
+      <span class="mono">{countries.size}</span> 个国家/地区 ·
+      <span class="mono">{tierIds.length}</span> 个比较档位
+    </p>
+  </div>
+  <ViewBar />
+  <AnswerStrip {countries} />
+  {tierGroups.map(({ ids, name }, index) => (
+    <section class="tier-section">
+      <h2 class="section-heading">
+        <span class="mono muted">{String(index + 1).padStart(2, "0")}</span>
+        {name}
+      </h2>
+      <div class="tier-grid">
+        {ids.map((id) => (
+          <TierCard {id} {countries} />
+        ))}
+      </div>
+    </section>
+  ))}
+  <section class="tier-section">
+    <div class="section-heading">
+      <h2>最近变动</h2>
+      <a class="end" href="/changes">全部变动 →</a>
+    </div>
+    <ChangeGroups changes={getChanges()} {countries} limit={5} />
+  </section>
+</Layout>
+<style>
+.tier-section + .tier-section {
+  margin-top: 24px;
+}
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1023px) {
+  .tier-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+</style>

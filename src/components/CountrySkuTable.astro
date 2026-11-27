@@ -1,0 +1,237 @@
+---
+import { type Quote, quoteLine, tierGroups } from "../lib/data";
+import { formatCny } from "../lib/format";
+import { priceDisplay } from "../lib/price-display";
+
+interface Props {
+  quotes: Quote[];
+  lowestSkus: ReadonlySet<string>;
+}
+const { quotes, lowestSkus } = Astro.props;
+const histories = quotes.filter(({ status }) => status === "historical").length;
+const groups = tierGroups.map((group) => ({
+  ...group,
+  rows: quotes
+    .filter((row) => quoteLine(row) === group.line)
+    .sort((a, b) => a.status.localeCompare(b.status, "en")),
+}));
+const filters = [
+  "全部",
+  "Ultra·30TB",
+  "AI Pro",
+  "AI Plus",
+  "纯存储",
+  "免费试用",
+];
+---
+
+<section
+  id="country-skus"
+  data-filter-line="all"
+  data-show-history="no"
+  aria-label="SKU 报价"
+>
+  <div class="sku-controls">
+    <fieldset class="pills" aria-label="筛选产品线">
+      {[{ line: "all" }, ...groups].map(({ line }, index) => (
+        <label class="control">
+          <input
+            class="sr-only"
+            type="radio"
+            name="sku-line"
+            data-sku-line
+            value={line}
+            checked={index === 0}
+          />
+          {filters[index]}
+        </label>
+      ))}
+    </fieldset>
+    <label class="control">
+      <input type="checkbox" data-sku-history disabled={histories === 0}>
+      含历史快照 <span class="mono">(+{histories})</span>
+    </label>
+  </div>
+  <div class="panel">
+    <table class="data-table sku-table">
+      <thead>
+        <tr>
+          <th scope="col">档位说明 / SKU</th>
+          <th scope="col" class="num">首期</th>
+          <th scope="col" class="num">续费</th>
+          <th scope="col" class="num">首年月均</th>
+          <th scope="col">状态</th>
+        </tr>
+      </thead>
+      {groups.map(({ name, line, rows }) => (
+        <tbody data-sku-group={line}>
+          <tr class="table-group">
+            <th scope="rowgroup" colspan="5">
+              {name}
+            </th>
+          </tr>
+          {rows.map((quote) => {
+            const display = priceDisplay(quote);
+            const [intro, renew, year] = [
+              display.introCny,
+              display.renewCny,
+              formatCny(display.prices[1]),
+            ];
+            const [rawIntro, rawRenew] = display.raw.split(" → ");
+            const isHistorical = quote.status === "historical";
+            return (
+              <tr data-sku-row={quote.status} title={quote.source}>
+                <th scope="row" class="sku-name">
+                  <p>{quote.description}</p>
+                  <button
+                    class="copy-sku mono small"
+                    type="button"
+                    title="复制 SKU"
+                    data-copy={quote.skuId}
+                  >
+                    {quote.skuId}
+                    <span role="status" data-copy-status></span>
+                  </button>
+                </th>
+                <td class="num sku-amount">
+                  <span class="mobile-price-label">首期</span>
+                  <span>{quote.intro ? intro : "·"}</span>
+                  {quote.intro && (
+                    <span class="original muted small">
+                      {rawIntro} {quote.currency}
+                    </span>
+                  )}
+                </td>
+                <td class="num sku-amount">
+                  <span class="mobile-price-label">续费</span>
+                  <span>
+                    {renew}
+                    {display.annual && <span class="annual small">年付</span>}
+                  </span>
+                  <span class="original muted small">
+                    {rawRenew ?? rawIntro}
+                  </span>
+                </td>
+                <td class="num sku-amount">
+                  <span class="mobile-price-label">首年月均</span>
+                  <span>{year}</span>
+                  {display.badge && (
+                    <span class={`badge small ${display.badge.level}`}>
+                      {display.badge.label}
+                    </span>
+                  )}
+                </td>
+                <td class="sku-status small">
+                  {isHistorical ? (
+                    <span class="badge historical-badge">历史快照</span>
+                  ) : lowestSkus.has(quote.skuId) ? (
+                    <span class="badge best">全球最低</span>
+                  ) : (
+                    <span class="muted">·</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      ))}
+    </table>
+    <p class="empty-message" data-sku-empty hidden>
+      此产品线没有符合筛选条件的报价。
+    </p>
+  </div>
+</section>
+<style>
+.sku-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 10px;
+}
+.sku-controls .control:has(:focus-visible) {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+.sku-controls label:has(:disabled) {
+  cursor: default;
+  opacity: 0.7;
+}
+[data-sku-row="historical"] {
+  color: var(--muted-ink);
+}
+#country-skus[data-filter-line="ultra"] tbody:not([data-sku-group="ultra"]),
+#country-skus[data-filter-line="pro"] tbody:not([data-sku-group="pro"]),
+#country-skus[data-filter-line="plus"] tbody:not([data-sku-group="plus"]),
+#country-skus[data-filter-line="storage"] tbody:not([data-sku-group="storage"]),
+#country-skus[data-filter-line="offers"] tbody:not([data-sku-group="offers"]),
+#country-skus[data-show-history="no"] tbody:not(:has([data-sku-row="active"])),
+#country-skus[data-show-history="no"] [data-sku-row="historical"],
+#country-skus[data-show-history="yes"] tbody:not(:has([data-sku-row])) {
+  display: none;
+}
+.sku-table :is(th, td):not(.sku-name) {
+  white-space: nowrap;
+}
+.sku-table tbody tr[data-sku-row]:hover {
+  background: var(--bg-hover);
+}
+.sku-name {
+  text-align: left;
+  font-weight: 500;
+}
+.sku-amount > :is(span, small) {
+  display: block;
+}
+.sku-amount .annual {
+  margin-inline-start: 4px;
+}
+.sku-amount .badge {
+  display: inline-block;
+}
+.historical-badge {
+  background: var(--bg-subtle);
+}
+.sku-amount .mobile-price-label {
+  display: none;
+}
+@media (max-width: 767px) {
+  .sku-table,
+  .sku-table tbody,
+  .sku-table .table-group,
+  .sku-table .table-group th {
+    display: block;
+  }
+  .sku-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .sku-table [data-sku-row] {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: 1px solid var(--border-default);
+  }
+  .sku-table [data-sku-row] > * {
+    border: 0;
+    padding: 4px 6px;
+  }
+  .sku-table .sku-name {
+    grid-column: 1 / 3;
+  }
+  .sku-status {
+    grid-column: 3;
+    grid-row: 1;
+    text-align: right;
+  }
+  .sku-amount .mobile-price-label {
+    display: block;
+    color: var(--text-secondary);
+    font: 11px / 15px var(--font-ui);
+  }
+  .sku-table .sku-amount .badge {
+    font-size: 10px;
+  }
+}
+</style>

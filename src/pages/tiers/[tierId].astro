@@ -1,0 +1,113 @@
+---
+import Layout from "../../components/Layout.astro";
+import RankTable from "../../components/RankTable.astro";
+import ViewBar from "../../components/ViewBar.astro";
+import {
+  getCountries,
+  getTierDetails,
+  getTierRanking,
+  priceViews,
+  productLines,
+  type TierId,
+  tierIds,
+  tiers,
+  withoutUsdMarkets,
+} from "../../lib/data";
+import { formatCny } from "../../lib/format";
+
+export function getStaticPaths() {
+  return tierIds.map((id) => ({ params: { tierId: id }, props: { id } }));
+}
+const { id } = Astro.props as { id: TierId };
+const tier = tiers[id];
+const details = getTierDetails(id);
+const line = productLines[tier.line];
+const countries = getCountries();
+const defaultRanking = getTierRanking(id, "year");
+const leader = defaultRanking[0];
+const cheapest = countries.find(
+  ({ code }) => code === leader?.quote.countryCode,
+);
+const description = `${tier.name}覆盖 ${defaultRanking.length} 个国家/地区，首年月均最低为${cheapest?.nameZh ?? ""} ${formatCny(leader?.price ?? null)}。查看首期、续费和完整排名。`;
+---
+
+<Layout
+  title={tier.name}
+  {description}
+  crumbs={[
+    { name: "低价速查", href: "/" },
+    { name: tier.name, href: `/tiers/${id}` },
+  ]}
+>
+  <div class="page-heading">
+    <div>
+      <p class="breadcrumb"><a href="/">低价速查</a> / {line.name}</p>
+      <h1>{tier.name}</h1>
+      <p class="tier-terms secondary">
+        包含 <span class="mono">{details.skuIds.length}</span> 个
+        <a href="#sku-ids">SKU</a> ·
+        {details.introPeriods.length === 0 ? (
+          "原价报价，无首期优惠"
+        ) : (
+          <>
+            含首期优惠，优惠期数为{" "}
+            <span class="mono">{details.introPeriods.join("、")}</span> 期
+          </>
+        )}
+      </p>
+    </div>
+  </div>
+  <ViewBar>
+    <label class="control"
+      ><input type="checkbox" data-usd-ranking> 隐藏 USD 计价区</label
+    >
+    <span class="mono small muted" aria-live="polite">
+      {priceViews.map((view) => {
+        const ranking = getTierRanking(id, view);
+        return (
+          <span class="view-content" data-price-view={view}>
+            <span data-usd-view="all">{ranking.length}</span>
+            <span data-usd-view="filtered">
+              {withoutUsdMarkets(ranking, countries).length}
+            </span>{" "}
+            / {ranking.length}
+          </span>
+        );
+      })}
+    </span>
+  </ViewBar>
+  {priceViews.map((view) => (
+    <RankTable {view} ranking={getTierRanking(id, view)} {countries} />
+  ))}
+  <section class="tier-skus" id="sku-ids">
+    <h2 class="section-heading">对应 SKU</h2>
+    <ul class="sku-list">
+      {details.skuIds.map((sku) => (
+        <li>
+          <button
+            title="复制 SKU"
+            type="button"
+            class="copy-sku mono small"
+            data-copy={sku}
+          >
+            {sku}
+            <span role="status" data-copy-status></span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  </section>
+</Layout>
+<style>
+.tier-terms {
+  margin-top: 4px;
+}
+.tier-skus {
+  margin-top: 24px;
+  scroll-margin-top: 172px;
+}
+.sku-list {
+  display: grid;
+  gap: 4px;
+}
+</style>

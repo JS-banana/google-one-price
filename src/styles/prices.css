@@ -1,0 +1,63 @@
+.dual-price {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.price-action {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 2px;
+  max-width: 100%;
+  text-align: right;
+}
+.price-action:where(:hover) :where(.amount) {
+  text-decoration: underline var(--border-strong);
+  text-underline-offset: 2px;
+}
+.amount {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+.annual {
+  padding-inline: 2px;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border-radius: 2px;
+}
+.price-sub {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--text-secondary);
+}
+.cny-offer-when-hidden {
+  display: none;
+}
+html[data-original="off"] .cny-offer-when-hidden {
+  display: inline;
+}
+.rank-best {
+  background: var(--best-bg);
+  box-shadow: inset 2px 0 var(--best);
+}
+.rank-best .amount {
+  color: var(--best);
+}
+.rank-top3 {
+  background: var(--good-bg);
+}
+.trap-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--caution);
+}
+.trap-dot.warn {
+  background: var(--warn);
+}

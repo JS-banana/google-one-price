@@ -1,0 +1,100 @@
+---
+import { priceViews } from "../lib/data";
+import { viewLabels } from "../lib/price-labels";
+---
+
+<div class="view-bar">
+  <fieldset class="view-switch" aria-label="价格口径">
+    {priceViews.map((view) => (
+      <label class="control">
+        <input
+          type="radio"
+          name="price-view"
+          value={view}
+          checked={view === "year"}
+          data-view-radio
+        />
+        <span>{viewLabels[view]}</span>
+      </label>
+    ))}
+  </fieldset>
+  <div class="view-tools">
+    <label class="control"
+      ><input type="checkbox" data-original-switch checked> 显示原币</label
+    >
+    <slot />
+  </div>
+  <p class="small muted view-explanation">
+    <span class="view-content" data-price-view="intro"
+      >首期优惠价折合人民币月价，无优惠时取原价。</span
+    >
+    <span class="view-content" data-price-view="year"
+      >首年月均按优惠期及续费期计算。例如，3 期优惠加 9 期续费，再除以
+      12。</span
+    >
+    <span class="view-content" data-price-view="renew"
+      >优惠结束后的续费月价，年付按 12 个月折算。</span
+    >
+  </p>
+</div>
+<style is:global>
+.view-bar {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 10;
+  background: var(--bg-canvas);
+  border-block: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 7px 0;
+}
+.view-switch {
+  display: flex;
+  background: var(--bg-subtle);
+  border-radius: 4px;
+  padding: 2px;
+  min-width: 0;
+}
+.view-switch label {
+  background: transparent;
+  border-color: transparent;
+  position: relative;
+  padding-inline: 10px;
+}
+.view-switch label:has(input:focus-visible) {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+  z-index: 1;
+}
+.view-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.view-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.view-explanation {
+  flex: 1 1 100%;
+}
+@media (max-width: 767px) {
+  .view-bar {
+    gap: 4px 8px;
+  }
+  .view-switch {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .view-tools {
+    flex: 1 1 100%;
+  }
+}
+</style>

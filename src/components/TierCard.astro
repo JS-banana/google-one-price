@@ -1,0 +1,176 @@
+---
+import {
+  type Country,
+  getTierDetails,
+  getTierRanking,
+  homeCardNotice,
+  priceFor,
+  priceViews,
+  type TierId,
+  tiers,
+} from "../lib/data";
+import { formatCny } from "../lib/format";
+import { priceDisplay } from "../lib/price-display";
+import CountryLabel from "./CountryLabel.astro";
+import DualPrice from "./DualPrice.astro";
+
+interface Props {
+  id: TierId;
+  countries: ReadonlyMap<string, Country>;
+}
+const { id, countries } = Astro.props;
+const tier = tiers[id];
+const details = getTierDetails(id);
+const href = `/tiers/${id}`;
+---
+
+<article class="tier-card panel">
+  {priceViews.map((view) => {
+    const ranking = getTierRanking(id, view);
+    const leader = ranking[0];
+    const warning = leader
+      ? homeCardNotice(leader.quote, view, priceFor(leader.quote, "renew"))
+      : null;
+    return (
+      <div class="view-content" data-price-view={view}>
+        <div class="card-heading">
+          <h3>
+            <a href={href}>{tier.shortName}</a>
+          </h3>
+          <span class="small muted">
+            {details.introPeriods.length === 1 ? (
+              <>
+                首期 <span class="mono">×{details.introPeriods[0]}</span>
+              </>
+            ) : (
+              <>
+                <span class="mono">{ranking.length}</span> 国在售
+              </>
+            )}
+          </span>
+          <span class="card-lowest best-text">
+            最低{" "}
+            <span class="mono">
+              {formatCny(
+                leader?.price ?? null,
+                view,
+                leader?.quote.intro?.local === 0,
+              )}
+            </span>
+          </span>
+        </div>
+        <ol class="card-ranking" aria-label={`${tier.name}前 5 名`}>
+          {ranking.slice(0, 5).map(({ rank, quote, price }) => {
+            const country = countries.get(quote.countryCode);
+            if (!country)
+              throw new Error(`Unknown country: ${quote.countryCode}`);
+            return (
+              <li
+                class:list={[
+                  "row-link card-rank",
+                  {
+                    "rank-best": rank === 1,
+                    "rank-top3": rank === 2 || rank === 3,
+                  },
+                ]}
+              >
+                <span class="mono muted">#{rank}</span>
+                <a href={`/countries/${country.code.toLowerCase()}`}>
+                  <CountryLabel country={country} eager />
+                </a>
+                <DualPrice
+                  display={priceDisplay(quote)}
+                  price={price}
+                  view={view}
+                />
+              </li>
+            );
+          })}
+        </ol>
+        <div class="card-footer small">
+          {warning !== null && (
+            <span class="warning">
+              ⚠ 首期最低但续费 <span class="mono">{formatCny(warning)}/月</span>
+              ，长期持有请看「首年月均」
+            </span>
+          )}
+          <a
+            href={href}
+            aria-label={`查看${tier.name}的全部 ${ranking.length} 国排名`}
+          >
+            全部 <span class="mono">{ranking.length}</span> 国 →
+          </a>
+        </div>
+      </div>
+    );
+  })}
+</article>
+<style>
+.tier-card {
+  min-width: 0;
+}
+.card-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 40px;
+  padding: 6px 10px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-default);
+}
+.card-heading h3 {
+  min-width: 0;
+}
+.card-heading a {
+  text-decoration-color: transparent;
+}
+.card-heading a:where(:hover) {
+  text-decoration-color: currentColor;
+}
+.card-lowest {
+  margin-inline-start: auto;
+  white-space: nowrap;
+}
+.card-rank {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) minmax(min-content, max-content);
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--border-default);
+}
+.card-rank:hover,
+.card-rank:focus-within {
+  background-color: var(--bg-hover);
+}
+.card-rank a {
+  text-decoration-color: transparent;
+}
+.card-rank a:where(:hover) {
+  text-decoration-color: currentColor;
+}
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 4px 8px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  min-height: 34px;
+}
+.card-footer a {
+  margin-inline-start: auto;
+  white-space: nowrap;
+}
+.warning {
+  color: var(--warn);
+}
+@media (max-width: 767px) {
+  .card-rank {
+    grid-template-columns: 18px minmax(0, 1fr) minmax(min-content, max-content);
+    gap: 6px;
+    padding-inline: 8px;
+  }
+}
+</style>

@@ -1,0 +1,238 @@
+.matrix-shell {
+  margin-top: 8px;
+}
+.matrix-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 24px;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.matrix-mode-button,
+.matrix-list {
+  display: none;
+}
+.matrix-scroller {
+  position: relative;
+  overflow: auto;
+  max-height: calc(100svh - 195px);
+  min-height: 280px;
+}
+.full-matrix {
+  width: max-content;
+  table-layout: fixed;
+}
+.matrix-country-column {
+  width: 168px;
+}
+.matrix-price-column {
+  width: 124px;
+}
+.full-matrix th,
+.full-matrix td {
+  padding: 0;
+}
+.full-matrix thead th {
+  position: sticky;
+  z-index: 4;
+  box-sizing: border-box;
+}
+.full-matrix .matrix-group-head th {
+  top: 0;
+  height: 28px;
+  border-top: 2px solid var(--text-primary);
+  border-right: 1px solid var(--border-strong);
+  padding-inline: 7px;
+}
+.full-matrix .matrix-tier-head th {
+  top: 28px;
+  height: 47px;
+  padding: 4px 5px;
+  border-right: 1px solid var(--border-default);
+  border-bottom-color: var(--border-strong);
+  vertical-align: top;
+}
+.matrix-head-title {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  justify-content: space-between;
+}
+.matrix-head-title button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+.matrix-head-title a {
+  padding-inline: 2px;
+  color: var(--text-secondary);
+  text-decoration-color: transparent;
+}
+.matrix-head-title :is(a, button):hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sort-arrow {
+  font-size: 9px;
+  color: var(--muted-ink);
+}
+.matrix-min {
+  white-space: nowrap;
+  font-size: 10px;
+}
+.full-matrix thead .matrix-column-hover {
+  background: var(--bg-hover);
+}
+.full-matrix .matrix-frozen {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  border-right: 1px solid var(--border-strong);
+}
+.full-matrix thead .matrix-frozen {
+  z-index: 5;
+}
+.full-matrix tbody .matrix-frozen {
+  padding-inline: 6px;
+  background: var(--bg-surface);
+  text-align: left;
+  font-weight: 500;
+}
+.matrix-scroller.scrolled .matrix-frozen {
+  box-shadow: 3px 0 4px rgb(0 0 0 / 0.11);
+}
+.matrix-country {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+.matrix-country:hover .matrix-country-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.matrix-country-text {
+  display: grid;
+}
+.matrix-country-iso {
+  display: none;
+}
+.full-matrix .matrix-cell {
+  border-right: 1px solid var(--border-default);
+  height: 44px;
+  text-align: center;
+}
+.full-matrix .matrix-cell-view .dual-price {
+  min-height: 43px;
+  align-content: center;
+  padding: 2px 4px;
+}
+.matrix-cell-view {
+  height: 100%;
+  display: none;
+  background-color: var(--bg-surface);
+}
+html[data-view="intro"] [data-cell-views~="intro"],
+html[data-view="year"] [data-cell-views~="year"],
+html[data-view="renew"] [data-cell-views~="renew"] {
+  display: block;
+}
+html[data-view="intro"] [data-cell-best~="intro"],
+html[data-view="year"] [data-cell-best~="year"],
+html[data-view="renew"] [data-cell-best~="renew"] {
+  background-color: var(--best-bg);
+  box-shadow: inset 2px 0 var(--best);
+}
+:where(html[data-view="intro"]) [data-cell-best~="intro"] .amount,
+:where(html[data-view="year"]) [data-cell-best~="year"] .amount,
+:where(html[data-view="renew"]) [data-cell-best~="renew"] .amount {
+  color: var(--best);
+}
+html[data-view="intro"] [data-cell-top~="intro"],
+html[data-view="year"] [data-cell-top~="year"],
+html[data-view="renew"] [data-cell-top~="renew"] {
+  background-color: var(--good-bg);
+}
+.full-matrix tbody tr:hover .matrix-cell-view,
+.full-matrix tbody tr:hover .matrix-frozen {
+  background-color: var(--bg-hover);
+}
+.compact-price .price-sub {
+  white-space: normal;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+  font-size: 10px;
+  line-height: 11px;
+}
+.compact-price .amount {
+  font-size: 12px;
+}
+.compact-price .matrix-per-month,
+.compact-price .annual {
+  font-size: 10px;
+}
+html[data-original="off"] .full-matrix .matrix-cell {
+  height: 34px;
+}
+html[data-original="off"] .full-matrix .matrix-cell-view .dual-price {
+  min-height: 33px;
+}
+@media (max-width: 767px) {
+  .matrix-status {
+    min-height: 30px;
+    margin-bottom: 6px;
+  }
+  .matrix-mode-button {
+    display: inline-flex;
+  }
+  :where(.matrix-shell[data-matrix-mode="list"]) .matrix-scroller {
+    display: none;
+  }
+  .matrix-shell[data-matrix-mode="list"] .matrix-list:not([hidden]) {
+    display: block;
+  }
+  .matrix-scroller {
+    max-height: calc(100svh - 238px);
+  }
+  .matrix-country-column {
+    width: 76px;
+  }
+  .full-matrix .matrix-country-text {
+    display: none;
+  }
+  .matrix-country-iso {
+    display: inline;
+  }
+  .matrix-tier-pills {
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 3px;
+    margin-inline: -3px;
+  }
+  .matrix-list-link {
+    margin-block: 6px;
+  }
+  .matrix-list-table th,
+  .matrix-list-table td {
+    padding-inline: 5px;
+  }
+  .matrix-list-table tr {
+    height: 44px;
+  }
+  .matrix-list-table .price-sub {
+    flex-wrap: wrap;
+  }
+  .matrix-list-table .matrix-country-code {
+    line-height: 11px;
+  }
+  .matrix-list-table .matrix-country-name {
+    overflow-wrap: anywhere;
+  }
+}

@@ -1,0 +1,182 @@
+---
+import controls from "../lib/controls.js?raw";
+import { getMetadata } from "../lib/data";
+import "../styles/global.css";
+import "../styles/prices.css";
+import Footer from "./Footer.astro";
+import Header from "./Header.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  wide?: boolean;
+  dataset?: boolean;
+  crumbs?: { name: string; href: string }[];
+  noindex?: boolean;
+}
+const {
+  title,
+  description,
+  wide = false,
+  dataset = false,
+  crumbs = [],
+  noindex = false,
+} = Astro.props;
+const fullTitle = `${title} · G1 价目`;
+const site = Astro.site;
+if (!site) throw new Error("Set the site URL in astro.config.mjs");
+const canonical = new URL(Astro.url.pathname.replace(/\/$/, "") || "/", site);
+const og = new URL("/og.png", site);
+const jsonLd = [
+  {
+    "@type": "WebSite",
+    "@id": new URL("/#website", site),
+    url: site,
+    name: "G1 价目",
+    inLanguage: "zh-CN",
+  },
+  ...(dataset
+    ? [
+        {
+          "@type": "Dataset",
+          name: "Google One / Gemini iOS App Store 跨区订阅价格",
+          description,
+          dateModified: `${getMetadata().refreshedAt}+08:00`,
+          creator: { "@type": "Organization", name: "G1 价目", url: site },
+          license: new URL("/rates#data-license", site),
+          variableMeasured: [
+            "首期月价",
+            "首年月均",
+            "续费月价",
+            "原币报价",
+            "汇率",
+          ],
+          url: canonical,
+        },
+      ]
+    : []),
+  ...(crumbs.length
+    ? [
+        {
+          "@type": "BreadcrumbList",
+          itemListElement: crumbs.map(({ name, href }, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name,
+            item: new URL(href, site),
+          })),
+        },
+      ]
+    : []),
+];
+---
+
+<!doctype html>
+<html lang="zh-CN" data-view="year" data-original="on">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script is:inline>
+    (() => {
+      const root = document.documentElement;
+      const view = new URLSearchParams(location.search).get("view");
+      const valid = (value) => ["intro", "year", "renew"].includes(value);
+      if (valid(view)) root.dataset.view = view;
+      try {
+        const saved = localStorage.getItem("g1:view");
+        if (valid(view)) localStorage.setItem("g1:view", view);
+        else if (valid(saved)) root.dataset.view = saved;
+        root.dataset.original =
+          localStorage.getItem("g1:original") === "off" ? "off" : "on";
+      } catch {}
+    })();
+    </script>
+    <title>{fullTitle}</title>
+    <meta name="description" content={description}>
+    <link rel="canonical" href={canonical.href}>
+    {noindex && <meta name="robots" content="noindex">}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="G1 价目">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:title" content={fullTitle}>
+    <meta property="og:description" content={description}>
+    <meta property="og:url" content={canonical.href}>
+    <meta property="og:image" content={og.href}>
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="G1 价目 · 全球 iOS 订阅低价速查">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content={fullTitle}>
+    <meta name="twitter:description" content={description}>
+    <meta name="twitter:image" content={og.href}>
+    <meta name="twitter:image:alt" content="G1 价目 · 全球 iOS 订阅低价速查">
+    <meta
+      name="theme-color"
+      content="#FAF8F4"
+      media="(prefers-color-scheme: light)"
+    >
+    <meta
+      name="theme-color"
+      content="#121311"
+      media="(prefers-color-scheme: dark)"
+    >
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link
+      rel="preload"
+      href="/fonts/ibm-plex-mono-latin-600-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    >
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": jsonLd,
+      }).replaceAll("<", "\\u003c")}
+    ></script>
+  </head>
+  <body>
+    <a href="#content" class="skip-link">跳到主要内容</a>
+    <Header />
+    <main id="content" class:list={["wrap", { wide }]}>
+      <slot />
+    </main>
+    <Footer />
+    <section id="price-detail" popover aria-label="价格明细">
+      <p></p>
+      <button
+        type="button"
+        class="control"
+        popovertarget="price-detail"
+        popovertargetaction="hide"
+      >
+        关闭
+      </button>
+    </section>
+    <script is:inline set:html={controls}></script>
+  </body>
+</html>
+<style is:global>
+#price-detail {
+  position: fixed;
+  inset: auto;
+  z-index: 50;
+  margin: 0;
+  width: max-content;
+  max-width: min(380px, calc(100vw - 24px));
+  padding: 12px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  box-shadow: 0 3px 12px rgb(0 0 0 / 0.12);
+}
+#price-detail p {
+  white-space: pre-line;
+  margin-bottom: 8px;
+}
+</style>

@@ -1,0 +1,312 @@
+---
+import {
+  type Country,
+  isUsdMarket,
+  type PriceView,
+  type RankedQuote,
+  relativeToLowest,
+  summarizeRanking,
+  withoutUsdMarkets,
+} from "../lib/data";
+import { formatCny, formatMultiplier, formatRelative } from "../lib/format";
+import { priceDisplay } from "../lib/price-display";
+import CountryLabel from "./CountryLabel.astro";
+import DualPrice from "./DualPrice.astro";
+
+interface Props {
+  view: PriceView;
+  ranking: RankedQuote[];
+  countries: readonly Country[];
+}
+const { view, ranking, countries } = Astro.props;
+const countriesByCode = new Map(
+  countries.map((country) => [country.code, country]),
+);
+const filtered = withoutUsdMarkets(ranking, countries);
+const filteredByCode = new Map(
+  filtered.map((row) => [row.quote.countryCode, row.rank]),
+);
+const allSummary = summarizeRanking(ranking);
+const filteredSummary = summarizeRanking(filtered);
+const missing = countries.filter(
+  (country) => !ranking.some(({ quote }) => quote.countryCode === country.code),
+);
+const columns = [
+  ["intro", "首期"],
+  ["renew", "续费"],
+  ["year", "首年月均"],
+] as const;
+const priceIndexes = { intro: 0, year: 1, renew: 2 };
+const summaryModes = [
+  { key: "all", ...allSummary },
+  { key: "filtered", ...filteredSummary },
+];
+const isTrial = (rows: RankedQuote[]) => rows[0]?.quote.intro?.local === 0;
+---
+
+<div class="view-content rank-view" data-price-view={view}>
+  {summaryModes.map(({ key, count, lowest, median, highest, spread }) => (
+    <dl class="rank-summary" data-usd-view={key}>
+      <div>
+        <dt>在售地区</dt>
+        <dd class="mono">{count}</dd>
+      </div>
+      <div>
+        <dt>最低</dt>
+        <dd class="mono best-text">
+          {formatCny(lowest, view, isTrial(key === "all" ? ranking : filtered))}
+        </dd>
+      </div>
+      <div>
+        <dt>中位</dt>
+        <dd class="mono">
+          {formatCny(
+            median,
+            view,
+            median === 0 && isTrial(key === "all" ? ranking : filtered),
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt>最高</dt>
+        <dd class="mono">{formatCny(highest)}</dd>
+      </div>
+      <div>
+        <dt>最高／最低</dt>
+        <dd class="mono">{spread === null ? "·" : formatMultiplier(spread)}</dd>
+      </div>
+    </dl>
+  ))}
+  <div class="panel">
+    <table class="data-table rank-table" aria-label="档位全球排名">
+      <thead>
+        <tr>
+          <th scope="col" class="num rank-number">排名</th>
+          <th scope="col">国家/地区</th>
+          {columns.map(([id, label]) => (
+            <th
+              scope="col"
+              class:list={[
+                "num",
+                id === view ? "selected-price" : "other-price",
+              ]}
+              aria-sort={id === view ? "ascending" : undefined}
+            >
+              {label}
+              {id === view && <span aria-hidden="true"> ▲</span>}
+            </th>
+          ))}
+          <th scope="col" class="num relative">较最低</th>
+        </tr>
+      </thead>
+      <tbody>
+        {ranking.map(({ quote, price, rank }) => {
+          const country = countriesByCode.get(quote.countryCode);
+          if (!country)
+            throw new Error(`Unknown country: ${quote.countryCode}`);
+          const altRank = filteredByCode.get(country.code);
+          const display = priceDisplay(quote);
+          const rankClass = (position: number | undefined) =>
+            position === 1
+              ? "best"
+              : position && position <= 3
+                ? "top3"
+                : "plain";
+          const barLength = (highest: number | null) =>
+            `${highest ? (price / highest) * 100 : 0}%`;
+          return (
+            <tr class:list={["row-link", { "rank-usd": isUsdMarket(country) }]}>
+              <td class="num rank-number muted">
+                <span data-usd-view="all">#{rank}</span>
+                <span data-usd-view="filtered">#{altRank}</span>
+              </td>
+              <td>
+                <a href={`/countries/${country.code.toLowerCase()}`}>
+                  <CountryLabel {country} eager={rank <= 12} />
+                </a>
+              </td>
+              {columns.map(([id]) =>
+                id === view ? (
+                  <td
+                    class="num selected-price rank-cell"
+                    data-all-rank={rankClass(rank)}
+                    data-filtered-rank={rankClass(altRank)}
+                    style={`--all-bar:${barLength(allSummary.highest)};--filtered-bar:${barLength(filteredSummary.highest)}`}
+                  >
+                    <DualPrice display={display} {price} {view} />
+                  </td>
+                ) : (
+                  <td class="num other-price secondary">
+                    {formatCny(
+                      display.prices[priceIndexes[id]],
+                      id,
+                      display.trial,
+                    )}
+                    {display.annual && <span class="annual small">年付</span>}
+                  </td>
+                ),
+              )}
+              <td class="num relative secondary">
+                <span
+                  data-usd-view="all"
+                  class:list={[{ "best-text": rank === 1 }]}
+                >
+                  {rank === 1
+                    ? "最低"
+                    : formatRelative(
+                        relativeToLowest(price, allSummary.lowest ?? 0),
+                      )}
+                </span>
+                <span
+                  data-usd-view="filtered"
+                  class:list={[{ "best-text": altRank === 1 }]}
+                >
+                  {altRank === 1
+                    ? "最低"
+                    : formatRelative(
+                        relativeToLowest(price, filteredSummary.lowest ?? 0),
+                      )}
+                </span>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+    {missing.length > 0 && (
+      <details class="missing-markets">
+        <summary>
+          另有 <span class="mono">{missing.length}</span> 个地区无此档位
+        </summary>
+        <p>{missing.map(({ nameZh }) => nameZh).join("、")}</p>
+      </details>
+    )}
+  </div>
+</div>
+<style is:global>
+html:not([data-usd="hidden"]) [data-usd-view="filtered"],
+html[data-usd="hidden"] [data-usd-view="all"],
+html[data-usd="hidden"] .rank-usd {
+  display: none;
+}
+.rank-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-block: 14px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+}
+.rank-summary > div {
+  padding: 8px 10px;
+}
+.rank-summary > div + div {
+  border-left: 1px solid var(--border-default);
+}
+.rank-summary dt {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.rank-summary dd {
+  margin-top: 3px;
+  font-weight: 600;
+}
+.rank-table .rank-number {
+  width: 58px;
+}
+.rank-table .relative {
+  width: 96px;
+  white-space: nowrap;
+}
+.rank-table td {
+  height: 44px;
+}
+.rank-table a {
+  text-decoration-color: transparent;
+}
+.rank-table a:hover {
+  text-decoration-color: currentColor;
+}
+.rank-table th.selected-price {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.rank-cell {
+  position: relative;
+  isolation: auto;
+  min-width: 190px;
+  --bar: var(--all-bar);
+}
+html[data-usd="hidden"] .rank-cell {
+  --bar: var(--filtered-bar);
+}
+.rank-cell::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--bar);
+  background: var(--bg-subtle);
+  pointer-events: none;
+  opacity: 0.55;
+}
+.rank-cell .dual-price {
+  position: relative;
+}
+html:not([data-usd="hidden"]) .rank-cell[data-all-rank="best"],
+html[data-usd="hidden"] .rank-cell[data-filtered-rank="best"] {
+  background-color: var(--best-bg);
+  box-shadow: inset 2px 0 var(--best);
+}
+html:not([data-usd="hidden"]) .rank-cell[data-all-rank="best"] .amount,
+html[data-usd="hidden"] .rank-cell[data-filtered-rank="best"] .amount {
+  color: var(--best);
+}
+html:not([data-usd="hidden"]) .rank-cell[data-all-rank="top3"],
+html[data-usd="hidden"] .rank-cell[data-filtered-rank="top3"] {
+  background-color: var(--good-bg);
+}
+.rank-table tr:hover .rank-cell::before {
+  opacity: 0.3;
+}
+.missing-markets {
+  border-top: 1px solid var(--border-default);
+}
+.missing-markets summary,
+.missing-markets p {
+  padding: 10px 12px;
+  color: var(--text-secondary);
+}
+.missing-markets p {
+  padding-top: 0;
+}
+@media (max-width: 767px) {
+  .rank-table .other-price {
+    display: none;
+  }
+  .rank-table th,
+  .rank-table td {
+    padding-inline: 5px;
+  }
+  .rank-table .rank-number,
+  .rank-table .relative {
+    width: auto;
+  }
+  .rank-cell {
+    min-width: 0;
+  }
+  .rank-table .price-sub {
+    flex-wrap: wrap;
+  }
+  .rank-table .country-label {
+    gap: 3px;
+  }
+  .rank-summary > div {
+    padding-inline: 4px;
+    text-align: center;
+  }
+  .rank-summary dd,
+  .rank-summary dt {
+    font-size: 11px;
+  }
+}
+</style>

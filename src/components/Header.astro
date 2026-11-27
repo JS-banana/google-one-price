@@ -1,0 +1,170 @@
+---
+import { getMetadata } from "../lib/data";
+import { formatFixedRate, formatShanghaiTime } from "../lib/format";
+
+const nav = [
+  { href: "/", label: "低价速查" },
+  { href: "/matrix", label: "价格矩阵" },
+  { href: "/countries", label: "国家/地区" },
+  { href: "/changes", label: "变动记录" },
+  { href: "/rates", label: "汇率与说明" },
+];
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const active = (href: string) =>
+  href === path ||
+  (href !== "/" && path.startsWith(`${href}/`)) ||
+  (href === "/" && path.startsWith("/tiers/"));
+const { refreshedAt, usdToCny } = getMetadata();
+---
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="/" class="wordmark" aria-label="G1 价目首页"
+      ><i aria-hidden="true"></i><span class="mono">G1</span> 价目</a
+    >
+    <nav class="desktop-nav" aria-label="主导航">
+      {nav.map(({ href, label }) => (
+        <a href={href} aria-current={active(href) ? "page" : undefined}>
+          {label}
+        </a>
+      ))}
+    </nav>
+    <a href="/rates" class="header-meta mono small">
+      更新
+      <time datetime={`${refreshedAt}+08:00`}
+        >{formatShanghaiTime(refreshedAt, true)}</time
+      ><span class="desktop-meta"> · $1 = ¥{formatFixedRate(usdToCny)}</span>
+    </a>
+    <details class="mobile-nav">
+      <summary aria-label="主导航菜单">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 16 16"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <path d="M2.5 4h11m-11 4h11m-11 4h11"></path>
+        </svg>
+      </summary>
+      <nav aria-label="主导航">
+        {nav.map(({ href, label }) => (
+          <a href={href} aria-current={active(href) ? "page" : undefined}>
+            {label}
+          </a>
+        ))}
+      </nav>
+    </details>
+  </div>
+</header>
+<style>
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-canvas);
+  border-bottom: 1px solid var(--border-default);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  height: calc(var(--header-height) - 1px);
+  gap: 24px;
+}
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.wordmark i {
+  width: 6px;
+  height: 6px;
+  background: var(--warn);
+  margin-right: 4px;
+}
+.desktop-nav {
+  display: flex;
+  align-self: stretch;
+  gap: 16px;
+}
+nav a {
+  text-decoration: none;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+nav a:where(:hover, [aria-current]) {
+  color: var(--text-primary);
+}
+.desktop-nav a {
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+}
+.desktop-nav a[aria-current] {
+  border-color: var(--text-primary);
+  font-weight: 600;
+}
+.header-meta {
+  margin-inline-start: auto;
+  padding: 4px 7px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--muted-ink);
+}
+.header-meta:hover {
+  color: var(--text-primary);
+}
+.mobile-nav {
+  display: none;
+}
+@media (max-width: 767px) {
+  .header-inner {
+    gap: 10px;
+  }
+  .desktop-nav,
+  .desktop-meta {
+    display: none;
+  }
+  .mobile-nav {
+    display: block;
+  }
+  .mobile-nav summary {
+    display: grid;
+    place-items: center;
+    list-style: none;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+  }
+  .mobile-nav summary::-webkit-details-marker {
+    display: none;
+  }
+  .mobile-nav nav {
+    position: absolute;
+    inset: 100% 0 auto;
+    display: grid;
+    padding: 4px 12px;
+    background: var(--bg-surface);
+    box-shadow: 0 3px 6px rgb(0 0 0 / 0.1);
+    border-bottom: 1px solid var(--border-default);
+  }
+  .mobile-nav nav a {
+    padding: 10px 8px;
+  }
+  .mobile-nav nav a[aria-current] {
+    font-weight: 600;
+    border-left: 2px solid var(--text-primary);
+  }
+}
+</style>
