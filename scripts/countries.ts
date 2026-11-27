@@ -70,9 +70,6 @@ export function getCountryLabels(code: string) {
   if (!Object.hasOwn(countries, code)) {
     throw new Error(`Unmapped country code ${code}`);
   }
-  const [alpha2, nameEn, region] = countries[code as keyof typeof countries];
-  const flag = String.fromCodePoint(
-    ...Array.from(alpha2, (letter) => letter.charCodeAt(0) + 127397),
-  );
-  return { nameEn, region, flag };
+  const [iso2, nameEn, region] = countries[code as keyof typeof countries];
+  return { nameEn, region, iso2 };
 }

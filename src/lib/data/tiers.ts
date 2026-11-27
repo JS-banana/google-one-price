@@ -1,11 +1,20 @@
-import { compareConverted, firstPrice } from "./money.ts";
-import type { Quote, Snapshot } from "./schema.ts";
+import { createPricing, type PriceView } from "./money.ts";
+import { isUsdMarket } from "./offers.ts";
+import type { Country, Quote, Snapshot } from "./schema.ts";
 
-export type RankingBasis = "first" | "renewal";
+export const productLines = {
+  ultra: { name: "Ultra 与 20x/5x 大容量", shortName: "Ultra / 30TB" },
+  pro: { name: "Google AI Pro", shortName: "AI Pro" },
+  plus: { name: "Google AI Plus", shortName: "AI Plus" },
+  storage: { name: "纯存储", shortName: "纯存储" },
+  offers: { name: "免费试用与优惠", shortName: "免费试用" },
+} as const;
+export type ProductLine = keyof typeof productLines;
 
 type TierDefinition = {
   name: string;
-  defaultBasis: RankingBasis;
+  shortName: string;
+  line: ProductLine;
   requiresIntro?: boolean;
   // Earlier SKU IDs win when the same market has identical prices.
   skus: readonly string[] | null;
@@ -14,7 +23,8 @@ type TierDefinition = {
 export const tiers = {
   "storage-30tb-monthly": {
     name: "30 TB 存储月付（20x）",
-    defaultBasis: "renewal",
+    line: "ultra",
+    shortName: "30 TB 月付",
     skus: [
       "com.google.one.30tb.m",
       "g1.ios.30tb.m",
@@ -25,7 +35,8 @@ export const tiers = {
   },
   "ultra-50-monthly": {
     name: "Google AI Ultra 5 折 3 个月",
-    defaultBasis: "first",
+    line: "ultra",
+    shortName: "Ultra 5 折 ×3",
     requiresIntro: true,
     skus: [
       "com.google.gemini.30tb.ai.pro.m.3months_ip_50p",
@@ -34,7 +45,8 @@ export const tiers = {
   },
   "ultra-monthly": {
     name: "Google AI Ultra 原价月付",
-    defaultBasis: "renewal",
+    line: "ultra",
+    shortName: "Ultra 原价月付",
     skus: [
       "com.google.gemini.30tb.ai.pro.m",
       "g1.ios.30tb.ai.pro.m",
@@ -45,7 +57,8 @@ export const tiers = {
   },
   "storage-20tb-monthly": {
     name: "20 TB 存储月付（5x）",
-    defaultBasis: "renewal",
+    line: "ultra",
+    shortName: "20 TB 月付",
     skus: [
       "com.google.one.20tb.m",
       "com.google.gemini.20tb.m",
@@ -55,7 +68,8 @@ export const tiers = {
   },
   "ai-pro-99-monthly": {
     name: "Google AI Pro（5 TB）99% 优惠 · 3 个月",
-    defaultBasis: "first",
+    line: "pro",
+    shortName: "0.1 折 ×3",
     requiresIntro: true,
     skus: [
       "com.google.gemini.2tb.ai.m.3month_ip_99p",
@@ -64,7 +78,8 @@ export const tiers = {
   },
   "ai-pro-67-75-monthly": {
     name: "Google AI Pro（5 TB）2.5–3.3 折 · 3 个月",
-    defaultBasis: "first",
+    line: "pro",
+    shortName: "2.5–3.3 折 ×3",
     requiresIntro: true,
     skus: [
       "g1.ios.ai.2tb.m.ip_3mo_67p",
@@ -74,7 +89,8 @@ export const tiers = {
   },
   "ai-pro-monthly": {
     name: "Google AI Pro（5 TB）原价月付",
-    defaultBasis: "renewal",
+    line: "pro",
+    shortName: "原价月付",
     skus: [
       "com.google.gemini.2tb.ai.m",
       "com.google.one.2tb.ai.m",
@@ -85,22 +101,14 @@ export const tiers = {
   },
   "ai-pro-yearly": {
     name: "Google AI Pro（5 TB）原价年付",
-    defaultBasis: "renewal",
+    line: "pro",
+    shortName: "原价年付",
     skus: ["com.google.gemini.2tb.ai.a", "g1.ios.2tb.ai.a"],
-  },
-  "storage-10tb-monthly": {
-    name: "10 TB 月付",
-    defaultBasis: "renewal",
-    skus: ["com.google.gemini.10tb.m", "g1.ios.10tb.m"],
-  },
-  "storage-5tb-monthly": {
-    name: "5 TB 月付（独立 SKU）",
-    defaultBasis: "renewal",
-    skus: ["com.google.gemini.5tb.m", "com.google.gemini.5tb.m.iog"],
   },
   "ai-plus-promo-monthly": {
     name: "Google AI Plus（400 GB）首期特价",
-    defaultBasis: "first",
+    line: "plus",
+    shortName: "首期特价",
     requiresIntro: true,
     skus: [
       "com.google.gemini.helium.m.3month_ip_97p",
@@ -113,7 +121,8 @@ export const tiers = {
   },
   "ai-plus-monthly": {
     name: "Google AI Plus（400 GB）原价月付",
-    defaultBasis: "renewal",
+    line: "plus",
+    shortName: "原价月付",
     skus: [
       "com.google.gemini.helium.m",
       "com.google.one.helium.m",
@@ -122,63 +131,136 @@ export const tiers = {
       "com.google.one.helium.m.iog",
     ],
   },
-  offers: { name: "免费试用与各档优惠", defaultBasis: "first", skus: null },
+  "storage-10tb-monthly": {
+    name: "10 TB 月付",
+    line: "storage",
+    shortName: "10 TB 月付",
+    skus: ["com.google.gemini.10tb.m", "g1.ios.10tb.m"],
+  },
+  "storage-5tb-monthly": {
+    name: "5 TB 月付（独立 SKU）",
+    line: "storage",
+    shortName: "5 TB 月付",
+    skus: ["com.google.gemini.5tb.m", "com.google.gemini.5tb.m.iog"],
+  },
+  offers: {
+    name: "免费试用与各档优惠",
+    shortName: "综合优惠榜",
+    line: "offers",
+    skus: null,
+  },
 } as const satisfies Record<string, TierDefinition>;
 
 export type TierId = keyof typeof tiers;
-export type RankedQuote = { rank: number; quote: Quote };
+export type RankedQuote = { rank: number; quote: Quote; price: number };
 export const tierIds = Object.keys(tiers) as TierId[];
+export const tierGroups = (Object.keys(productLines) as ProductLine[]).map(
+  (line) => ({
+    line,
+    ...productLines[line],
+    ids: tierIds.filter((id) => tiers[id].line === line),
+  }),
+);
+
+export function tierQuotes(data: Snapshot, tierId: TierId): Quote[] {
+  const { skus, requiresIntro = false }: TierDefinition = tiers[tierId];
+  const skuIds = skus ? new Set(skus) : null;
+  return data.quotes.filter(
+    (quote) =>
+      quote.status === "active" &&
+      (skuIds
+        ? skuIds.has(quote.skuId) && requiresIntro === (quote.intro !== null)
+        : quote.intro !== null),
+  );
+}
 
 export function rankTier(
   data: Snapshot,
   tierId: TierId,
-  basis: RankingBasis = tiers[tierId].defaultBasis,
+  view: PriceView = "year",
 ): RankedQuote[] {
-  const { skus, requiresIntro = false }: TierDefinition = tiers[tierId];
   const priority = new Map<string, number>(
-    skus?.map((id, index) => [id, index]),
+    tiers[tierId].skus?.map((id, index) => [id, index]),
   );
-  const rates = new Map(
-    data.exchangeRates.map(({ currency, unitsPerUsd }) => [
-      currency,
-      unitsPerUsd,
-    ]),
-  );
-  const rate = (q: Quote) => {
-    const value = rates.get(q.currency);
-    if (value === undefined)
-      throw new Error(`Missing exchange rate for ${q.currency}`);
-    return value;
-  };
-  const best = new Map<string, Quote>();
-  const compare = (a: Quote, b: Quote) => {
-    const rateA = rate(a);
-    const rateB = rate(b);
-    const first = () =>
-      compareConverted(firstPrice(a).local, rateA, firstPrice(b).local, rateB);
-    const renewal = () =>
-      compareConverted(a.renewal.local, rateA, b.renewal.local, rateB);
+  const { priceInputs, monthlyCny } = createPricing(data);
+  const best = new Map<string, Entry>();
+  type Entry = ReturnType<typeof priceInputs> & { quote: Quote };
+  const compare = (a: Entry, b: Entry) => {
+    const byPrice = (priceView: PriceView) =>
+      a.local[priceView]
+        .times(b.unitsPerUsd)
+        .comparedTo(b.local[priceView].times(a.unitsPerUsd));
     return (
-      (basis === "first" ? first() || renewal() : renewal() || first()) ||
-      a.countryCode.localeCompare(b.countryCode, "en") ||
-      (priority.get(a.skuId) ?? 0) - (priority.get(b.skuId) ?? 0) ||
-      a.skuId.localeCompare(b.skuId, "en") ||
-      a.source.localeCompare(b.source, "en")
+      byPrice(view) ||
+      byPrice("renew") ||
+      byPrice("intro") ||
+      a.quote.countryCode.localeCompare(b.quote.countryCode, "en") ||
+      (priority.get(a.quote.skuId) ?? 0) - (priority.get(b.quote.skuId) ?? 0) ||
+      a.quote.skuId.localeCompare(b.quote.skuId, "en") ||
+      a.quote.source.localeCompare(b.quote.source, "en")
     );
   };
 
-  for (const quote of data.quotes) {
-    if (quote.status !== "active") continue;
-    const matches = skus
-      ? priority.has(quote.skuId) && requiresIntro === (quote.intro !== null)
-      : quote.intro !== null;
-    if (!matches) continue;
+  for (const quote of tierQuotes(data, tierId)) {
+    const entry = { quote, ...priceInputs(quote) };
     const current = best.get(quote.countryCode);
-    if (!current || compare(quote, current) < 0)
-      best.set(quote.countryCode, quote);
+    if (!current || compare(entry, current) < 0)
+      best.set(quote.countryCode, entry);
   }
 
   return [...best.values()]
     .sort(compare)
-    .map((quote, index) => ({ rank: index + 1, quote }));
+    .map(({ quote, local, unitsPerUsd }, index) => ({
+      rank: index + 1,
+      quote,
+      price: monthlyCny(local[view], unitsPerUsd),
+    }));
+}
+
+export function summarizeRanking(rows: readonly RankedQuote[]) {
+  const count = rows.length;
+  const lowest = rows[0]?.price ?? null;
+  const highest = rows.at(-1)?.price ?? null;
+  const middle = Math.floor(count / 2);
+  const median = !count
+    ? null
+    : count % 2
+      ? rows[middle].price
+      : (rows[middle - 1].price + rows[middle].price) / 2;
+  return {
+    count,
+    lowest,
+    highest,
+    median,
+    spread: lowest && highest !== null ? highest / lowest : null,
+  };
+}
+
+export function withoutUsdMarkets(
+  rows: readonly RankedQuote[],
+  countries: readonly Country[],
+): RankedQuote[] {
+  const hidden = new Set(countries.filter(isUsdMarket).map(({ code }) => code));
+  return rows
+    .filter(({ quote }) => !hidden.has(quote.countryCode))
+    .map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+export function tierOfferTerms(quotes: readonly Pick<Quote, "introPeriods">[]) {
+  const periods = new Set(
+    quotes.flatMap(({ introPeriods }) =>
+      introPeriods === null ? [] : [introPeriods],
+    ),
+  );
+  return [...periods].sort((a, b) => a - b);
+}
+
+export function quoteLine(
+  quote: Pick<Quote, "description" | "intro">,
+): ProductLine {
+  if (quote.intro?.local === 0) return "offers";
+  if (/Google AI Ultra|^(?:20|30) TB/u.test(quote.description)) return "ultra";
+  if (quote.description.startsWith("Google AI Pro")) return "pro";
+  if (quote.description.startsWith("Google AI Plus")) return "plus";
+  return "storage";
 }

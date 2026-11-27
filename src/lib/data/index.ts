@@ -1,5 +1,6 @@
 import snapshot from "../../data/snapshot.json" with { type: "json" };
 import { buildMatrix, type Matrix } from "./matrix.ts";
+import { createPricing, type PriceView, priceViews } from "./money.ts";
 import type {
   Change,
   Country,
@@ -11,13 +12,23 @@ import type {
 } from "./schema.ts";
 import {
   type RankedQuote,
-  type RankingBasis,
   rankTier,
   type TierId,
+  tierIds,
+  tierOfferTerms,
+  tierQuotes,
+  tiers,
 } from "./tiers.ts";
 
+export { groupChanges, summarizeChanges } from "./changes.ts";
 export type { Matrix, MatrixSkuId } from "./matrix.ts";
-export { firstPrice } from "./money.ts";
+export { type PriceView, priceViews, relativeToLowest } from "./money.ts";
+export {
+  homeCardNotice,
+  isUsdMarket,
+  renewalMultiplier,
+  renewalTrap,
+} from "./offers.ts";
 export type {
   Change,
   Country,
@@ -27,15 +38,22 @@ export type {
   Quote,
   Sku,
 } from "./schema.ts";
+export { regions } from "./schema.ts";
 export {
+  productLines,
+  quoteLine,
   type RankedQuote,
-  type RankingBasis,
+  summarizeRanking,
   type TierId,
+  tierGroups,
   tierIds,
+  tierOfferTerms,
   tiers,
+  withoutUsdMarkets,
 } from "./tiers.ts";
 
 const data = snapshot as Snapshot;
+export const { priceFor, describePrice } = createPricing(data);
 
 export function getMetadata(): Metadata {
   return data.metadata;
@@ -60,15 +78,57 @@ export function getCountryQuotes(
   );
 }
 
+const rankings = new Map<string, RankedQuote[]>();
+
 export function getTierRanking(
   tierId: TierId,
-  basis?: RankingBasis,
+  view: PriceView = "year",
 ): RankedQuote[] {
-  return rankTier(data, tierId, basis);
+  const key = `${tierId}/${view}`;
+  const cached = rankings.get(key);
+  if (cached) return cached.slice();
+  const ranking = rankTier(data, tierId, view);
+  rankings.set(key, ranking);
+  return ranking.slice();
 }
 
-export function getMatrix(): Matrix {
+export function getWorkbookMatrix(): Matrix {
   return buildMatrix(data);
+}
+
+export function getComparisonMatrix() {
+  const columns = tierIds.map((id) =>
+    priceViews.map(
+      (view) =>
+        new Map(
+          getTierRanking(id, view).map((row) => [row.quote.countryCode, row]),
+        ),
+    ),
+  );
+  return data.countries.map((country) => ({
+    country,
+    cells: columns.map((column) =>
+      column.map((ranking) => ranking.get(country.code) ?? null),
+    ),
+  }));
+}
+
+export function getCountryAdvantages(countryCode: string) {
+  return tierIds.flatMap((id) => {
+    const match = getTierRanking(id, "year")
+      .slice(0, 3)
+      .find(({ quote }) => quote.countryCode === countryCode);
+    return match ? [{ id, ...match }] : [];
+  });
+}
+
+export function getTierDetails(id: TierId) {
+  const quotes = tierQuotes(data, id);
+  return {
+    skuIds:
+      tiers[id].skus ?? [...new Set(quotes.map(({ skuId }) => skuId))].sort(),
+    introPeriods: tierOfferTerms(quotes),
+  };
 }
 
 export function getChanges(): readonly Change[] {

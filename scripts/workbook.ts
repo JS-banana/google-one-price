@@ -2,6 +2,7 @@ import readExcelFile, { type Row, type SheetData } from "read-excel-file/node";
 import { z } from "zod";
 import { matrixColumns } from "../src/lib/data/matrix.ts";
 import { toPrice } from "../src/lib/data/money.ts";
+import { resolveIntroPeriods } from "../src/lib/data/offers.ts";
 import {
   amountSchema,
   type Country,
@@ -325,6 +326,13 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
         });
       }
     }
+    const introPeriods =
+      intro === null
+        ? null
+        : resolveIntroPeriods(description, decodeSku(skuId)).periods;
+    if (intro !== null && introPeriods === null) {
+      throw new Error(`${location}: missing intro periods for ${skuId}`);
+    }
     return {
       countryCode,
       skuId,
@@ -333,6 +341,7 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
       source,
       status,
       intro: intro === null ? null : price(intro, currency, location),
+      introPeriods,
       renewal: price(renewal, currency, location),
     };
   });

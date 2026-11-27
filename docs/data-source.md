@@ -19,13 +19,13 @@
 | 实体                  | 字段                                                                                                                                                                                                                |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `metadata`            | `refreshedAt` 为汇率页 A2 的工作簿刷新时间，`changesCheckedAt` 为变动页 A2 的检查时间。两者为无时区的 ISO 本地时间。另有 `usdToCny`、`fxProvider`、带时区的 `fxPublishedAt`。                                       |
-| `countries`（60）     | `code` 为三字母市场码，`nameZh` 来自原始明细，`nameEn`、`flag`、`region` 来自静态映射，`currency` 为该市场当前 App Store 报价币种。跨洲市场分组按产品筛选口径，格鲁吉亚归欧洲，哈萨克斯坦归亚太，土耳其归中东非洲。 |
+| `countries`（60）     | `code` 为三字母市场码，`nameZh` 来自原始明细，`nameEn`、`iso2`、`region` 来自静态映射，`currency` 为该市场当前 App Store 报价币种。跨洲市场分组按产品筛选口径，格鲁吉亚归欧洲，哈萨克斯坦归亚太，土耳其归中东非洲。 |
 | `skus`（94）          | `id` 为原 SKU，`family` 为前缀族，`storageCodeGb` 为 SKU 中的容量标记，`billingPeriod` 为 `P1M` 或 `P1Y`。无法从编号识别时相应字段为 `null`。可空的 `offer` 包含 `kind`、`encodedDuration`、`discountPercent`。     |
-| `quotes`（3,944）     | `countryCode`、`skuId`、原始中文 `description`、该条 `currency`、`source`、`status`、可空 `intro` 和必有的 `renewal`。每个金额为 `{ local, cny }`。                                                                 |
+| `quotes`（3,944）     | `countryCode`、`skuId`、原始中文 `description`、该条 `currency`、`source`、`status`、可空 `intro`、对应的 `introPeriods` 和必有的 `renewal`。每个金额为 `{ local, cny }`。                                          |
 | `changes`（100）      | `kind`、`countryCode`、`skuId`、`description`、`currency`、可空 `intro`、`introPeriods` 和 `renewal`。金额用本工作簿汇率重算。另存 `reportedIntroCny` 和 `reportedRenewalCny` 供回查。                              |
 | `exchangeRates`（55） | `currency`、`nameZh`、`unitsPerUsd`（1 USD 可换多少该原币）。                                                                                                                                                       |
 
-`applecommerce_v26` 2,844 条和 `apple_catalog` 223 条归为 `active`。`legacy_20261125` 828 条和 `legacy_20261125_annual` 49 条归为 `historical`。报价键为市场、SKU、来源，活跃报价额外保证每个市场与 SKU 组合唯一。排名和矩阵只用活跃报价，国家明细默认同时返回两种状态。
+`applecommerce_v26` 2,844 条和 `apple_catalog` 223 条归为 `active`。`legacy_20261125` 828 条和 `legacy_20261125_annual` 49 条归为 `historical`。报价键为市场、SKU、来源，活跃报价额外保证每个市场与 SKU 组合唯一。排名和矩阵只用活跃报价，国家明细保留两种状态，界面默认隐藏历史。
 
 ## SKU 命名
 
@@ -33,13 +33,15 @@
 - `100gb`、`2tb`、`30tb` 等是 SKU 内部容量标记，按 1 TB = 1,000 GB 归一。AI Pro 的 `2tb.ai` 常标作 5 TB，`helium` 对应 AI Plus 400 GB，`30tb.ai.pro` 对应 Ultra 30 TB。2 TB 存储在不同市场也可能显示为 AI Plus 2 TB。展示产品名以该条 `description` 和档位定义为准。
 - `.m`、`.m_v2` 为月付，`.a`、`.annual` 为年付。当前无显式账期的旧 `g1.*` 编号按明细的月付说明解码。
 - `3month_ip_99p`、`3months_ip_50p`、`ip_3mo_67p` 等编码优惠持续时间和减免百分比。比如 `99p` 是减 99%、付 0.1 折，`67p` 是付 3.3 折，`50p` 是付 5 折，`97p` 是付 0.3 折。带金额的 `1month_ip.0.49` 编为固定特价。
-- `eft` 表示免费试用，例如 `2months_eft` 编码 `P2M`，原始描述却写「首1期」。`encodedDuration` 只反映 SKU 字面编码，适用期数以实际销售条款为准。真实支付金额采用报价列。
+- `eft` 表示免费试用，例如 `2months_eft` 编码 `P2M`，原始描述却写「首1期」。`encodedDuration` 只反映 SKU 字面编码，适用期数以实际销售条款为准。真实支付金额采用报价列。导入先读中文条款中的「×N期」或「首N期」，缺失时使用 SKU 时长折成完整账期。月付一期为一个月，年付一期为十二个月。当前 219 条明细的中文期数与 SKU 时长冲突，采用中文条款（活跃 92 条、历史 127 条）。其中 32 条活跃年付试用的中文为「首1期」，SKU 为 `P1M`。按一个年付账期计入首年，同时保留续费金额。当前有优惠的明细均可解析中文期数。
 
 ## 档位与排序
 
-准确白名单见 [tiers.ts](../src/lib/data/tiers.ts)，15 列矩阵的 SKU 映射见 [matrix.ts](../src/lib/data/matrix.ts)。每档每个市场选一条，按所选价格升序。首期优先时以续费打破并列，续费优先时以首期打破并列。两价均相等时用市场代码排序，同一市场内优先使用白名单靠前的 SKU，再按 SKU ID 和来源排序。
+准确白名单、产品线及展示顺序见 [tiers.ts](../src/lib/data/tiers.ts)。界面矩阵与榜单共用 13 个档位，每个口径分别为每个市场选一条活跃报价。Excel 的 15 列 SKU 矩阵映射见 [matrix.ts](../src/lib/data/matrix.ts)，用于原币对账。排名按选定月价升序，其次按续费、首期、市场码、白名单顺序、SKU 和来源打破并列。
 
-| ID                      | 中文名                                   | SKU 范围与默认排序                                                                     |
+`intro` 用优惠价（空值回退续费），零元试用按 0 排名。`year` 默认按首年总额除以 12，优惠月数最多取 12，余下月份按续费。`renew` 用续费价。年付金额除以 12 比较，原币仍显示实际账期报价。涨幅以同币种的续费除以优惠价，零元试用单列；续费低于或等于首期的条目没有涨幅提示。非美国且按 USD 报价的市场单独标注。
+
+| ID                      | 中文名                                   | SKU 范围与工作簿对账口径                                                               |
 | ----------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------- |
 | `storage-30tb-monthly`  | 30 TB 存储月付（20x）                    | 三个前缀的 `30tb.m` 和相应 Catalog 别名，按续费。                                      |
 | `ultra-50-monthly`      | Google AI Ultra 5 折 3 个月              | Gemini / g1.ios 的 30 TB Ultra 月付 `50p` 三月优惠，按首期。                           |
@@ -48,7 +50,7 @@
 | `ai-pro-99-monthly`     | Google AI Pro（5 TB）99% 优惠 · 3 个月   | Gemini / g1.ios 的 `2tb.ai.m.3month_ip_99p`，按首期。                                  |
 | `ai-pro-67-75-monthly`  | Google AI Pro（5 TB）2.5–3.3 折 · 3 个月 | `ai.2tb.m` 的 `67p` 和 `75p.acq` 三月优惠，按首期。                                    |
 | `ai-pro-monthly`        | Google AI Pro（5 TB）原价月付            | 三个前缀的 `2tb.ai.m` 和相应 `m_v2` / Catalog 别名，按续费。                           |
-| `ai-pro-yearly`         | Google AI Pro（5 TB）原价年付            | Gemini / g1.ios 的 `2tb.ai.a`，按年度续费。                                            |
+| `ai-pro-yearly`         | Google AI Pro（5 TB）原价年付            | Gemini / g1.ios 的 `2tb.ai.a`，按续费。                                                |
 | `storage-10tb-monthly`  | 10 TB 月付                               | Gemini / g1.ios 的 `10tb.m`，按续费。                                                  |
 | `storage-5tb-monthly`   | 5 TB 月付（独立 SKU）                    | Gemini 的 `5tb.m` 和 Catalog 别名，按续费。                                            |
 | `ai-plus-promo-monthly` | Google AI Plus（400 GB）首期特价         | `helium.m` 的 97% / 50% / 67% 优惠，含两、三或六个月，按首期。                         |
@@ -66,7 +68,7 @@
 
 - 矩阵 900 个原币位置全匹配，包含 825 个报价和 75 个空格。空格集中在三个 30 TB 存储 SKU 列，每列覆盖 35 个市场。优惠列取首期，原价列取续费。变动页的已报 CNY 与本次重算一致。
 - Excel Top 5 的 65 行原币首期/续费都能按地区和 SKU 与活跃明细对上。独立派生的榜单有 58 个位置与 Excel 完全一致。AI Pro 原价月付第 3/4 名土耳其与埃及互换。两者显示都为 ¥114.46，用当前汇率的未舍入值比较，土耳其略低。
-- Excel 综合优惠榜的五席都来自 AI Pro 月付试用，没有写出该组限定 AI Pro。按综合标题纳入各档优惠后，五席均为其他套餐（本版为 100 GB 月付试用）。原始明细没有逐条发现时间或新旧标记，代码通过活跃首期金额动态收录。
+- Excel 综合优惠榜的五席都来自 AI Pro 月付试用，没有写出该组限定 AI Pro。按综合标题纳入各档优惠后，五席均为其他套餐（阶段 B 年付折月后，本版为 100 GB 年付试用）。原始明细没有逐条发现时间或新旧标记，代码通过活跃首期金额动态收录。
 - 总览的 AI Pro 三月档位标题只提 67%，实际含 75% SKU。`com.google.gemini.5tb.m` 在明细中也叫 AI Pro（5 TB），与主 `2tb.ai.m` SKU 在 6 个市场价格有差异，保留独立档位。
 - 21 个市场当前以 USD 报价，14 个市场的历史明细还出现本地币种。历史的 `g1.ai.pro.6months_ip_50p` 在 UZB 和 ARG 分别标了 1,199,880 和 149,485.05 USD 首期，均远高于 199.99 USD 续费。疑似历史币种标注问题，保留原值。
 - 活跃报价有 1,716 个空优惠和 316 个零元试用。活跃续费范围约 ¥4.26–1,777.00，最低非零首期 ¥0.72。澳大利亚、加拿大、中国香港等市场各 31 个活跃 SKU，为当前最少，最多为 75 个。

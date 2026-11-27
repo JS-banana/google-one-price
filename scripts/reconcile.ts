@@ -4,7 +4,7 @@ import {
   buildMatrix,
   matrixColumns,
 } from "../src/lib/data/matrix.ts";
-import { firstPrice } from "../src/lib/data/money.ts";
+import { introPrice } from "../src/lib/data/money.ts";
 import {
   amountSchema,
   countryCodeSchema,
@@ -135,7 +135,7 @@ export function readReferenceViews(
 }
 
 function amounts(quote: Quote) {
-  return `${quote.countryCode}/${quote.skuId} ${quote.currency} ${firstPrice(quote).local} → ${quote.renewal.local}`;
+  return `${quote.countryCode}/${quote.skuId} ${quote.currency} ${introPrice(quote).local} → ${quote.renewal.local}`;
 }
 
 export function reconcile(
@@ -162,7 +162,7 @@ export function reconcile(
     for (const [index, { skuId, label }] of columns.entries()) {
       matrixCells += 1;
       const quote = row?.quotes.get(skuId);
-      const actual = quote ? firstPrice(quote).local : null;
+      const actual = quote ? introPrice(quote).local : null;
       if (actual !== expected.prices[index]) {
         mismatches.push(
           `${expected.location} ${label}: Excel ${expected.prices[index]}, derived ${actual}`,
@@ -173,7 +173,13 @@ export function reconcile(
 
   let topRows = 0;
   for (const { id, rows: expectedRows } of reference.groups) {
-    const top = rankTier(data, id).slice(0, 5);
+    const top = rankTier(
+      data,
+      id,
+      expectedRows[0].first !== expectedRows[0].renewal || id === "offers"
+        ? "intro"
+        : "renew",
+    ).slice(0, 5);
     for (const expected of expectedRows) {
       topRows += 1;
       const quote = active.get(`${expected.countryCode}/${expected.skuId}`);
@@ -183,7 +189,7 @@ export function reconcile(
         !quote ||
         country?.nameZh !== expected.nameZh ||
         quote.currency !== expected.currency ||
-        firstPrice(quote).local !== expected.first ||
+        introPrice(quote).local !== expected.first ||
         quote.renewal.local !== expected.renewal
       ) {
         mismatches.push(
@@ -196,7 +202,7 @@ export function reconcile(
         derived.countryCode !== expected.countryCode ||
         derived.skuId !== expected.skuId ||
         derived.currency !== expected.currency ||
-        firstPrice(derived).local !== expected.first ||
+        introPrice(derived).local !== expected.first ||
         derived.renewal.local !== expected.renewal
       ) {
         rankDifferences.push(

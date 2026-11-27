@@ -19,7 +19,7 @@ export const countrySchema = z.object({
   code: countryCodeSchema,
   nameZh: textSchema,
   nameEn: textSchema,
-  flag: textSchema,
+  iso2: z.string().regex(/^[A-Z]{2}$/),
   region: z.enum(regions),
   currency: currencySchema,
 });
@@ -43,29 +43,40 @@ const priceSchema = z.object({
   cny: amountSchema,
 });
 
-export const quoteSchema = z.object({
-  countryCode: countryCodeSchema,
-  skuId: skuIdSchema,
-  description: textSchema,
-  currency: currencySchema,
-  source: sourceSchema,
-  status: z.enum(["active", "historical"]),
-  intro: priceSchema.nullable(),
-  renewal: priceSchema,
-});
+export const quoteSchema = z
+  .object({
+    countryCode: countryCodeSchema,
+    skuId: skuIdSchema,
+    description: textSchema,
+    currency: currencySchema,
+    source: sourceSchema,
+    status: z.enum(["active", "historical"]),
+    intro: priceSchema.nullable(),
+    introPeriods: z.int().positive().nullable(),
+    renewal: priceSchema,
+  })
+  .refine(
+    ({ intro, introPeriods }) => (intro === null) === (introPeriods === null),
+    { message: "Intro price and periods must appear together" },
+  );
 
-export const changeSchema = z.object({
-  kind: textSchema,
-  countryCode: countryCodeSchema,
-  skuId: skuIdSchema,
-  description: textSchema,
-  currency: currencySchema,
-  intro: priceSchema.nullable(),
-  renewal: priceSchema,
-  introPeriods: z.number().int().positive().nullable(),
-  reportedIntroCny: amountSchema.nullable(),
-  reportedRenewalCny: amountSchema,
-});
+export const changeSchema = z
+  .object({
+    kind: textSchema,
+    countryCode: countryCodeSchema,
+    skuId: skuIdSchema,
+    description: textSchema,
+    currency: currencySchema,
+    intro: priceSchema.nullable(),
+    renewal: priceSchema,
+    introPeriods: z.number().int().positive().nullable(),
+    reportedIntroCny: amountSchema.nullable(),
+    reportedRenewalCny: amountSchema,
+  })
+  .refine(
+    ({ intro, introPeriods }) => (intro === null) === (introPeriods === null),
+    { message: "Intro price and periods must appear together" },
+  );
 
 export const exchangeRateSchema = z.object({
   currency: currencySchema,
