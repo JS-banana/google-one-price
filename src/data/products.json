@@ -1,0 +1,165 @@
+{
+  "products": {
+    "plus": {
+      "name": "Google AI Plus",
+      "storageGb": [400, 2000],
+      "aiBenefits": [
+        "Gemini 应用的更高用量，含部分高级模型和工具。",
+        "扩展 Gemini Notebook、Google Flow 和 Gmail 中 Gemini 的使用权限。"
+      ],
+      "familySharing": {
+        "supported": true,
+        "maxAdditionalMembers": 5,
+        "excludedStorageGb": [],
+        "sharedBenefits": [
+          "Gmail、Drive 和相册共用存储池。",
+          "符合资格的成员可使用部分 Gemini、Gemini Notebook 和 Google Flow 权益。部分 AI 用量由全组共用。"
+        ],
+        "managerOnlyBenefits": ["Google Colab 和套餐升降级。"]
+      },
+      "appleSubscription": {
+        "manage": "从购买时的 Apple 账户进入 iOS「设置 → 姓名 → 订阅」，选原购买应用的订阅查看可选套餐。",
+        "cancel": "在同一订阅详情页选择「取消订阅」。"
+      },
+      "notes": [
+        "400 GB 或 2 TB 视具体套餐而定。AI 权益受年龄、地区和功能资格限制。",
+        "Plus 会员无法购买额外 AI credits。Google One 将可共享的 Workspace 高级功能限定在 Plus 2 TB 或更高档位。"
+      ],
+      "sources": [
+        "https://support.google.com/googleone/answer/16882689?hl=en",
+        "https://one.google.com/about/google-ai-plans/",
+        "https://gemini.google/subscriptions/",
+        "https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.google.com/gemini/answer/14517446?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.apple.com/en-us/118428"
+      ],
+      "reviewedAt": "2026-11-27"
+    },
+    "pro": {
+      "name": "Google AI Pro",
+      "storageGb": [5000, 10000],
+      "aiBenefits": [
+        "Gemini 应用的更高用量，包括高级模型及 Gemini 在 Google 应用中的功能。",
+        "扩展 Gemini Notebook、Google Flow 和 Google Antigravity 用量，可购买额外 AI credits。"
+      ],
+      "familySharing": {
+        "supported": true,
+        "maxAdditionalMembers": 5,
+        "excludedStorageGb": [],
+        "sharedBenefits": [
+          "Gmail、Drive 和相册共用存储池。",
+          "符合资格的成员可使用部分 Gemini、Gemini Notebook、Google Antigravity 等 AI 权益。Flow、Antigravity 的相应用量及支持产品的 AI credits 可按家庭共享。"
+        ],
+        "managerOnlyBenefits": [
+          "在符合资格的市场，YouTube Premium Lite 是个人权益。",
+          "Google Home Premium、Google Developer Program 高级权益、Google Colab 和购买额外 AI credits。"
+        ]
+      },
+      "appleSubscription": {
+        "manage": "从购买时的 Apple 账户进入 iOS「设置 → 姓名 → 订阅」，选原购买应用的订阅查看可选套餐。",
+        "cancel": "在同一订阅详情页选择「取消订阅」。"
+      },
+      "notes": [
+        "5 TB 或 10 TB 视具体套餐而定。AI 权益受年龄、地区和功能资格限制。",
+        "各 iOS SKU 的实际容量以购买页为准。Google 公布的 iOS 计费限制包括无法购买 Google Home Premium 加购项目。"
+      ],
+      "sources": [
+        "https://support.google.com/googleone/answer/14534406?hl=en",
+        "https://one.google.com/about/google-ai-plans/",
+        "https://gemini.google/subscriptions/",
+        "https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.google.com/gemini/answer/14517446?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.apple.com/en-us/118428"
+      ],
+      "reviewedAt": "2026-11-27"
+    },
+    "ultra": {
+      "name": "Google AI Ultra",
+      "storageGb": [20000, 30000],
+      "aiBenefits": [
+        "Gemini 与 Google Antigravity 的用量视档位为 Pro 的 5 倍或 20 倍。",
+        "为 Gemini Notebook 和 Google Flow 提供该产品线的最高用量，可购买额外 AI credits。"
+      ],
+      "familySharing": {
+        "supported": true,
+        "maxAdditionalMembers": 5,
+        "excludedStorageGb": [],
+        "sharedBenefits": [
+          "Gmail、Drive 和相册共用存储池。",
+          "符合资格的成员可使用部分 Gemini、Gemini Notebook、Google Antigravity 等 AI 权益。Flow、Antigravity 的相应用量及支持产品的 AI credits 可按家庭共享。",
+          "Google 的套餐说明列出部分市场的 YouTube Premium 家庭权益，要求家庭组管理员购买且成员同住。"
+        ],
+        "managerOnlyBenefits": [
+          "Google Home Premium、Google Developer Program 高级权益、Google Colab 和购买额外 AI credits。"
+        ]
+      },
+      "appleSubscription": {
+        "manage": "从购买时的 Apple 账户进入 iOS「设置 → 姓名 → 订阅」，选原购买应用的订阅查看可选套餐。",
+        "cancel": "在同一订阅详情页选择「取消订阅」。"
+      },
+      "notes": [
+        "20 TB 对应 Ultra 5x，30 TB 对应 Ultra 20x。AI 权益受年龄、地区和功能资格限制。",
+        "YouTube Premium 的资格取决于市场及计费方式。Google 为 Apple 计费用户另列了更换方案的流程，公开资料未按 iOS SKU 列出 YouTube 权益。"
+      ],
+      "sources": [
+        "https://support.google.com/googleone/answer/16286513?hl=en",
+        "https://one.google.com/about/google-ai-plans/",
+        "https://one.google.com/about/plans",
+        "https://gemini.google/subscriptions/",
+        "https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.google.com/googleone/answer/15808277?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.google.com/gemini/answer/14517446?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.apple.com/en-us/118428"
+      ],
+      "reviewedAt": "2026-11-27"
+    },
+    "storage": {
+      "name": "Google One 纯存储／大容量存储",
+      "storageGb": [30, 100, 200],
+      "largeStorageOnlyGb": null,
+      "aiBenefits": null,
+      "familySharing": {
+        "supported": true,
+        "maxAdditionalMembers": 5,
+        "excludedStorageGb": [30],
+        "sharedBenefits": [
+          "支持共享的档位可共用 Gmail、Drive 和相册的存储池。"
+        ],
+        "managerOnlyBenefits": [
+          "符合资格时，Google Store 消费返还仅适用于套餐管理员。"
+        ]
+      },
+      "appleSubscription": {
+        "manage": "Apple 计费的套餐可在 iOS「设置 → 姓名 → 订阅」中管理，选原购买应用查看可选套餐。",
+        "cancel": "在同一订阅详情页选择「取消订阅」。也可从 Google One 应用的管理套餐入口进入 Apple 的订阅管理。"
+      },
+      "notes": [
+        "Google 公开列出 30 GB Lite、100 GB 和 200 GB 存储方案。30 GB Lite 只在部分地区提供，且不支持家庭共享。",
+        "公开资料将 5、10、20、30 TB 列在 AI 套餐下。快照中的大容量存储 SKU 是否仍有独立纯存储版本、附带哪些 AI 权益，未能逐 SKU 确认。"
+      ],
+      "sources": [
+        "https://support.google.com/googleone/answer/9004013?co=GENIE.Platform%3DiOS&hl=en",
+        "https://one.google.com/about/plans",
+        "https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.google.com/googleone/answer/9003633?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.google.com/googleone/answer/9056360?co=GENIE.Platform%3DiOS&hl=en",
+        "https://support.apple.com/en-us/118428"
+      ],
+      "reviewedAt": "2026-11-27"
+    }
+  },
+  "familyGroup": {
+    "sameCountryRequired": true,
+    "switchCooldownMonths": 12,
+    "maxMembers": 6,
+    "notes": [
+      "成员必须与家庭组管理员居住在同一国家，同一时间只能在一个家庭组。",
+      "Google 的加入条件要求过去 12 个月未更换家庭组。Google Families 说明更换限制针对不同的家庭组，退出后可重新加入原家庭组。"
+    ],
+    "sources": [
+      "https://support.google.com/families/answer/6317858?hl=en",
+      "https://support.google.com/googleone/answer/9004015?co=GENIE.Platform%3DiOS&hl=en"
+    ],
+    "reviewedAt": "2026-11-27"
+  }
+}

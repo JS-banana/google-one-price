@@ -1,0 +1,663 @@
+[
+  {
+    "code": "ARE",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": [
+      "https://support.apple.com/en-us/111741#middleeast",
+      "https://www.apple.com/legal/internet-services/itunes/giftcards/ae/terms-en.html"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "ARG",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#latinamericacaribbean"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "AUS",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "paypal",
+      "apple-pay",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "BGD",
+    "giftCard": "unknown",
+    "paymentMethods": [],
+    "access": "unknown",
+    "notes": "Apple 的公开付款清单未列孟加拉，付款方式和礼品卡可用性均未确认。",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "BRA",
+    "giftCard": "none",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "bank-payment",
+      "account-balance",
+      "app-store-card"
+    ],
+    "access": "easy",
+    "notes": "Apple 列出多数信用卡及 PIX，余额可通过 App Store Card 兑换。",
+    "sources": ["https://support.apple.com/en-us/111741#latinamericacaribbean"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "CAN",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "paypal",
+      "apple-pay",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": ["https://support.apple.com/en-us/111741#uscanada"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "CHE",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "CHL",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#latinamericacaribbean"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "CMR",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "COL",
+    "giftCard": "none",
+    "paymentMethods": ["card", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#latinamericacaribbean"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "DEU",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "paypal",
+      "apple-pay",
+      "carrier",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "DNK",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "DZA",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "EGY",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#middleeast"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "GBR",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "paypal",
+      "apple-pay",
+      "carrier",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "GEO",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "GHA",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "HKG",
+    "giftCard": "none",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "local-wallet",
+      "account-balance",
+      "app-store-card"
+    ],
+    "access": "easy",
+    "notes": "Apple 列出的余额兑换方式为 App Store Card，另有仅供购买硬件的 Apple Store Gift Card。",
+    "sources": [
+      "https://support.apple.com/en-us/111741#asiapacific",
+      "https://www.apple.com/hk/en/legal/giftcards/applestore/hk-en/"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "HUN",
+    "giftCard": "none",
+    "paymentMethods": ["card", "apple-pay", "carrier", "account-balance"],
+    "access": "local-only",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "IDN",
+    "giftCard": "none",
+    "paymentMethods": ["card", "local-wallet", "account-balance"],
+    "access": "local-only",
+    "notes": "Apple 所称的印尼商店余额通过直接充值入账。",
+    "sources": [
+      "https://support.apple.com/en-us/111741#asiapacific",
+      "https://www.apple.com/legal/internet-services/itunes/giftcards/id/terms-en.html"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "IND",
+    "giftCard": "none",
+    "paymentMethods": [
+      "card",
+      "bank-payment",
+      "bank-top-up",
+      "account-balance",
+      "app-store-card"
+    ],
+    "access": "easy",
+    "notes": "Apple 列出 Visa、Mastercard 和 UPI，网上银行仅用于充值。",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "ISR",
+    "giftCard": "none",
+    "paymentMethods": ["card", "paypal", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#middleeast"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "JOR",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#middleeast"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "JPN",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "local-wallet",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "KAZ",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "account-balance"],
+    "access": "local-only",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "KEN",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "KHM",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "KOR",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "local-wallet"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "KWT",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#middleeast"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "LAO",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "LKA",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "MAR",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "MEX",
+    "giftCard": "none",
+    "paymentMethods": [
+      "card",
+      "paypal",
+      "apple-pay",
+      "carrier",
+      "account-balance",
+      "app-store-card"
+    ],
+    "access": "easy",
+    "sources": ["https://support.apple.com/en-us/111741#latinamericacaribbean"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "MMR",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "MYS",
+    "giftCard": "none",
+    "paymentMethods": ["card", "apple-pay", "carrier", "local-wallet"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "NGA",
+    "giftCard": "none",
+    "paymentMethods": ["card", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "NOR",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "NPL",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "NZL",
+    "giftCard": "none",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "account-balance",
+      "app-store-card"
+    ],
+    "access": "easy",
+    "notes": "Apple 列出的余额兑换方式为 App Store Card，当地条款将该卡的使用范围限定在 Apple 媒体服务。",
+    "sources": [
+      "https://support.apple.com/en-us/111741#asiapacific",
+      "https://www.apple.com/nz/legal/internet-services/itunes/giftcards/nz/terms.html"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "OMN",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#middleeast"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "PAK",
+    "giftCard": "none",
+    "paymentMethods": ["card", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "PER",
+    "giftCard": "none",
+    "paymentMethods": ["card", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#latinamericacaribbean"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "PHL",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "local-wallet"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "POL",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "bank-top-up",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "notes": "Apple 列出 Apple Gift Card，BLIK 仅用于充值。",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia",
+      "https://www.apple.com/legal/internet-services/itunes/giftcards/pl/terms.html"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "QAT",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#middleeast"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "ROU",
+    "giftCard": "none",
+    "paymentMethods": ["card", "apple-pay", "carrier", "account-balance"],
+    "access": "local-only",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "SAU",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "account-balance", "app-store-card"],
+    "access": "easy",
+    "sources": ["https://support.apple.com/en-us/111741#middleeast"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "SEN",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "SGP",
+    "giftCard": "none",
+    "paymentMethods": ["card", "apple-pay", "carrier", "local-wallet"],
+    "access": "local-only",
+    "notes": "现行付款清单未列礼品卡兑换，另有旧版 iTunes 卡条款，其当前兑换状态未确认。",
+    "sources": [
+      "https://support.apple.com/en-us/111741#asiapacific",
+      "https://www.apple.com/legal/internet-services/itunes/giftcards/sg/terms.html",
+      "https://www.apple.com/sg/legal/giftcards/applestore/sg/"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "SWE",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "THA",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "local-wallet"],
+    "access": "local-only",
+    "sources": [
+      "https://support.apple.com/en-us/111741#asiapacific",
+      "https://www.apple.com/legal/giftcards/applestore/th-en/"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "TUN",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "TUR",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "account-balance", "app-store-card"],
+    "access": "easy",
+    "notes": "Apple 列出的余额兑换方式为 App Store & iTunes Gift Card。",
+    "sources": ["https://support.apple.com/en-us/111741#middleeast"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "TWN",
+    "giftCard": "none",
+    "paymentMethods": [
+      "card",
+      "apple-pay",
+      "carrier",
+      "local-wallet",
+      "account-balance",
+      "app-store-card"
+    ],
+    "access": "easy",
+    "notes": "Apple 列出的余额来源是兑换 App Store Card。",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "TZA",
+    "giftCard": "none",
+    "paymentMethods": ["card", "account-balance"],
+    "access": "local-only",
+    "sources": ["https://support.apple.com/en-us/111741#africa"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "UKR",
+    "giftCard": "none",
+    "paymentMethods": ["card", "apple-pay"],
+    "access": "local-only",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "USA",
+    "giftCard": "official",
+    "paymentMethods": [
+      "card",
+      "paypal",
+      "apple-pay",
+      "local-wallet",
+      "account-balance",
+      "gift-card"
+    ],
+    "access": "easy",
+    "notes": "Apple 另明确列出 Apple Card 和 Apple Cash。",
+    "sources": ["https://support.apple.com/en-us/111741#uscanada"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "UZB",
+    "giftCard": "none",
+    "paymentMethods": ["card"],
+    "access": "local-only",
+    "sources": [
+      "https://support.apple.com/en-us/111741#europerussiacentralasia"
+    ],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "VNM",
+    "giftCard": "none",
+    "paymentMethods": [
+      "card",
+      "local-wallet",
+      "account-balance",
+      "app-store-card"
+    ],
+    "access": "easy",
+    "notes": "Apple 列出 App Store Card、直接充值及 MoMo 等钱包。",
+    "sources": ["https://support.apple.com/en-us/111741#asiapacific"],
+    "reviewedAt": "2026-11-27"
+  },
+  {
+    "code": "ZAF",
+    "giftCard": "none",
+    "paymentMethods": ["card", "carrier", "account-balance", "app-store-card"],
+    "access": "easy",
+    "sources": [
+      "https://support.apple.com/en-us/111741#africa",
+      "https://www.apple.com/legal/internet-services/itunes/giftcards/za/terms.html"
+    ],
+    "reviewedAt": "2026-11-27"
+  }
+]
