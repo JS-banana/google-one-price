@@ -1,4 +1,4 @@
-import type { PriceView } from "./data/money";
+import type { PriceView } from "./data/views";
 
 const fixed = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
@@ -47,6 +47,14 @@ export function formatMultiplier(value: number): string {
 
 export function formatRelative(value: number | null): string {
   return value === null ? "·" : `+${integer.format(value * 100)}%`;
+}
+
+export function formatSkuDescription(description: string): string {
+  return description
+    .replace(/首(\d+)期 \$0 免费试用/gu, "首 $1 期免费试用")
+    .replace(/首期\$\d+(?:\.\d+)?特价/gu, "首期特价")
+    .replace(/\(\d+% off\)/gu, "")
+    .replace(/×(\d+)期/gu, " × $1 期");
 }
 
 const timeInShanghai = new Intl.DateTimeFormat("sv-SE", {

@@ -1,6 +1,7 @@
 import { Decimal } from "decimal.js";
-import { billingMonths, type PriceView } from "./money.ts";
+import { billingMonths } from "./money.ts";
 import type { Country, Quote, Sku } from "./schema.ts";
+import type { PriceView } from "./views.ts";
 
 export function resolveIntroPeriods(description: string, sku: Sku) {
   const terms = /[×x]\s*([1-9]\d*)\s*期|首\s*([1-9]\d*)\s*期/u.exec(

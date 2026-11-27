@@ -1,4 +1,4 @@
-import type { PriceView } from "./data/money";
+import type { PriceView } from "./data/views";
 
 export const viewLabels = {
   intro: "首期月价",

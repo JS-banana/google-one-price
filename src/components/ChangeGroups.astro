@@ -1,6 +1,6 @@
 ---
 import { type Change, type Country, groupChanges, priceFor } from "../lib/data";
-import { formatCny } from "../lib/format";
+import { formatCny, formatSkuDescription } from "../lib/format";
 import { priceDisplay } from "../lib/price-display";
 import CountryLabel from "./CountryLabel.astro";
 import DualPrice from "./DualPrice.astro";
@@ -9,8 +9,9 @@ interface Props {
   changes: readonly Change[];
   countries: ReadonlyMap<string, Country>;
   limit?: number;
+  linkable?: boolean;
 }
-const { changes, countries, limit } = Astro.props;
+const { changes, countries, limit, linkable = true } = Astro.props;
 const groups = groupChanges(changes).slice(0, limit);
 ---
 
@@ -35,7 +36,7 @@ const groups = groupChanges(changes).slice(0, limit);
       );
     }
     return (
-      <details {id}>
+      <details id={linkable ? id : undefined}>
         <summary>
           <CountryLabel {country} /> <span class="mono muted">{code}</span>
           <span class="change-count">
@@ -47,7 +48,7 @@ const groups = groupChanges(changes).slice(0, limit);
           {rows.map((quote) => (
             <li class="change-item">
               <div>
-                <p>{quote.description}</p>
+                <p>{formatSkuDescription(quote.description)}</p>
                 <p class="mono muted small sku-id">{quote.skuId}</p>
               </div>
               <div class="change-price">

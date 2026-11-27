@@ -38,8 +38,8 @@ const description = `比较 ${countries.size} 个国家/地区的 ${tierIds.leng
         {name}
       </h2>
       <div class="tier-grid">
-        {ids.map((id) => (
-          <TierCard {id} {countries} />
+        {ids.map((id, column) => (
+          <TierCard {id} {countries} eager={index === 0 && column < 2} />
         ))}
       </div>
     </section>

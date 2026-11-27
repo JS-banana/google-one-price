@@ -1,6 +1,6 @@
 ---
 import { type Quote, quoteLine, tierGroups } from "../lib/data";
-import { formatCny } from "../lib/format";
+import { formatCny, formatSkuDescription } from "../lib/format";
 import { priceDisplay } from "../lib/price-display";
 
 interface Props {
@@ -82,7 +82,7 @@ const filters = [
             return (
               <tr data-sku-row={quote.status} title={quote.source}>
                 <th scope="row" class="sku-name">
-                  <p>{quote.description}</p>
+                  <p>{formatSkuDescription(quote.description)}</p>
                   <button
                     class="copy-sku mono small"
                     type="button"

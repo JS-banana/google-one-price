@@ -17,8 +17,9 @@ import DualPrice from "./DualPrice.astro";
 interface Props {
   id: TierId;
   countries: ReadonlyMap<string, Country>;
+  eager?: boolean;
 }
-const { id, countries } = Astro.props;
+const { id, countries, eager = false } = Astro.props;
 const tier = tiers[id];
 const details = getTierDetails(id);
 const href = `/tiers/${id}`;
@@ -76,7 +77,7 @@ const href = `/tiers/${id}`;
               >
                 <span class="mono muted">#{rank}</span>
                 <a href={`/countries/${country.code.toLowerCase()}`}>
-                  <CountryLabel country={country} eager />
+                  <CountryLabel country={country} {eager} />
                 </a>
                 <DualPrice
                   display={priceDisplay(quote)}

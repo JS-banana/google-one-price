@@ -63,10 +63,24 @@ import { viewLabels } from "../lib/price-labels";
   position: relative;
   padding-inline: 10px;
 }
+.view-switch label:has(input:checked) {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+  font-weight: 400;
+}
 .view-switch label:has(input:focus-visible) {
   outline: 2px solid var(--text-primary);
   outline-offset: 2px;
   z-index: 1;
+}
+html[data-view="intro"] .view-switch label:has([value="intro"]),
+html[data-view="year"] .view-switch label:has([value="year"]),
+html[data-view="renew"] .view-switch label:has([value="renew"]) {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+  font-weight: 600;
 }
 .view-switch input {
   position: absolute;

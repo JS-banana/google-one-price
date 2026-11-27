@@ -66,9 +66,14 @@ const description = `比较 ${rows.length} 个国家/地区 × ${tierIds.length}
       placeholder="搜索国家、地区或币种"
       matrix
     />
-    <label class="control"
-      ><input type="checkbox" data-matrix-filter="usd"> 隐藏 USD 计价区</label
-    >
+    <div class="matrix-toggle">
+      <label class="control"
+        ><input type="checkbox" data-matrix-filter="usd"> 隐藏 USD 计价区</label
+      >
+      <span id="matrix-visible" class="small mono muted" aria-live="polite"
+        >{rows.length} / {rows.length}</span
+      >
+    </div>
     <label class="control matrix-region">
       <span class="sr-only">大区</span>
       <select data-matrix-filter="region">

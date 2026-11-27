@@ -18,11 +18,11 @@ const label = formatCny(price, view, display.trial);
     class="price-action"
     data-price-detail
     title={display.detail}
-    aria-label={`${label}，查看价格明细`}
   >
     <span class="mono amount">{label}</span>
     {label !== "免费" && <span class="muted small">/月</span>}
     {display.annual && <span class="annual muted small">年付</span>}
+    <span class="sr-only">查看价格明细</span>
   </button>
   <div class:list={["price-sub small", { original: !display.offer }]}>
     <span class="mono original">{display.raw}</span>

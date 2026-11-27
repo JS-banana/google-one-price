@@ -1,10 +1,9 @@
 import { Decimal } from "decimal.js";
 import type { Change, Price, Quote, Sku, Snapshot } from "./schema.ts";
+import type { PriceView } from "./views.ts";
 
 const MoneyDecimal = Decimal.clone({ precision: 40 });
 
-export const priceViews = ["intro", "year", "renew"] as const;
-export type PriceView = (typeof priceViews)[number];
 export type PricedQuote = Pick<
   Quote | Change,
   "skuId" | "currency" | "description" | "intro" | "introPeriods" | "renewal"
@@ -103,8 +102,4 @@ export function createPricing(
       };
     },
   };
-}
-
-export function relativeToLowest(price: number, lowest: number): number | null {
-  return lowest > 0 ? (price - lowest) / lowest : null;
 }

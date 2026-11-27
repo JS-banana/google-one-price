@@ -1,6 +1,7 @@
-import { createPricing, type PriceView } from "./money.ts";
+import { createPricing } from "./money.ts";
 import { isUsdMarket } from "./offers.ts";
 import type { Country, Quote, Snapshot } from "./schema.ts";
+import type { PriceView } from "./views.ts";
 
 export const productLines = {
   ultra: { name: "Ultra 与 20x/5x 大容量", shortName: "Ultra / 30TB" },

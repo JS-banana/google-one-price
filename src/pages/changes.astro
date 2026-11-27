@@ -67,6 +67,7 @@ const description = `截至 ${formatShanghaiTime(time)}，记录 ${summary.count
             : changes.filter((change) => change.kind === kind)
         }
         {countries}
+        linkable={index === 0}
       />
     </div>
   ))}

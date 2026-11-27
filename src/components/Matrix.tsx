@@ -1,15 +1,14 @@
-import { useMemo, useState, useSyncExternalStore } from "react";
-import type { PriceView } from "../lib/data/money";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { Country } from "../lib/data/schema";
+import {
+  type PriceView,
+  relativeToLowest,
+  priceViews as views,
+} from "../lib/data/views";
 import { formatCny, formatRelative } from "../lib/format";
 import type { PriceDisplay } from "../lib/price-display";
 import { viewLabels } from "../lib/price-labels";
 
-const views = [
-  "intro",
-  "year",
-  "renew",
-] as const satisfies readonly PriceView[];
 type MatrixCountry = Country & { usd: boolean };
 type Cell = { offers: PriceDisplay[]; picks: number[]; ranks: number[] };
 type CountryRow = { country: MatrixCountry; cells: (Cell | null)[] };
@@ -58,7 +57,6 @@ function CountryLink({
     <a
       className="matrix-country"
       href={`/countries/${country.code.toLowerCase()}`}
-      aria-label={country.nameZh}
     >
       <img
         className="flag"
@@ -80,7 +78,10 @@ function CountryLink({
         )}
       </span>
       {!compact && (
-        <span className="matrix-country-iso mono">{country.code}</span>
+        <span className="matrix-country-iso mono">
+          {country.code}
+          <span className="sr-only"> {country.nameZh}</span>
+        </span>
       )}
     </a>
   );
@@ -197,6 +198,11 @@ export default function Matrix({ rows, groups }: Props) {
     [rows, search, region, hideUsd],
   );
 
+  useEffect(() => {
+    const status = document.getElementById("matrix-visible");
+    if (status) status.textContent = `${visible.length} / ${rows.length}`;
+  }, [visible.length, rows.length]);
+
   const rankings = useMemo(
     () =>
       views.map((_, index) =>
@@ -246,9 +252,6 @@ export default function Matrix({ rows, groups }: Props) {
       data-matrix-mode={tableMode ? "matrix" : "list"}
     >
       <div className="matrix-status">
-        <span className="mono small muted" aria-live="polite">
-          {visible.length} / {rows.length}
-        </span>
         <button
           className="control matrix-mode-button"
           type="button"
@@ -323,7 +326,7 @@ export default function Matrix({ rows, groups }: Props) {
                       <button
                         type="button"
                         onClick={() => sortBy(index)}
-                        aria-label={`${name}，${selected && !descending ? "降序" : selected ? "恢复默认排序" : "升序"}`}
+                        aria-label={`${shortName}，${name}，${selected && !descending ? "降序" : selected ? "恢复默认排序" : "升序"}`}
                       >
                         {shortName}
                         <span className="sort-arrow" aria-hidden="true">
@@ -514,9 +517,7 @@ export default function Matrix({ rows, groups }: Props) {
                             {index === 0 ? (
                               <span className="best-text">最低</span>
                             ) : (
-                              formatRelative(
-                                lowest > 0 ? (price - lowest) / lowest : null,
-                              )
+                              formatRelative(relativeToLowest(price, lowest))
                             )}
                           </td>
                         </tr>

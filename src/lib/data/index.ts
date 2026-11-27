@@ -1,6 +1,6 @@
 import snapshot from "../../data/snapshot.json" with { type: "json" };
 import { buildMatrix, type Matrix } from "./matrix.ts";
-import { createPricing, type PriceView, priceViews } from "./money.ts";
+import { createPricing } from "./money.ts";
 import type {
   Change,
   Country,
@@ -19,10 +19,10 @@ import {
   tierQuotes,
   tiers,
 } from "./tiers.ts";
+import { type PriceView, priceViews } from "./views.ts";
 
 export { groupChanges, summarizeChanges } from "./changes.ts";
 export type { Matrix, MatrixSkuId } from "./matrix.ts";
-export { type PriceView, priceViews, relativeToLowest } from "./money.ts";
 export {
   homeCardNotice,
   isUsdMarket,
@@ -51,6 +51,7 @@ export {
   tiers,
   withoutUsdMarkets,
 } from "./tiers.ts";
+export { type PriceView, priceViews, relativeToLowest } from "./views.ts";
 
 const data = snapshot as Snapshot;
 export const { priceFor, describePrice } = createPricing(data);

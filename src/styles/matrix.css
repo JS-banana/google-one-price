@@ -1,8 +1,17 @@
 .matrix-shell {
   margin-top: 8px;
 }
+.matrix-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.matrix-toggle span {
+  min-width: 7ch;
+  text-align: right;
+}
 .matrix-status {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: flex-end;
   min-height: 24px;
@@ -185,6 +194,7 @@ html[data-original="off"] .full-matrix .matrix-cell-view .dual-price {
 }
 @media (max-width: 767px) {
   .matrix-status {
+    display: flex;
     min-height: 30px;
     margin-bottom: 6px;
   }

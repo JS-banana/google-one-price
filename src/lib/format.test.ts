@@ -7,6 +7,7 @@ import {
   formatRate,
   formatRelative,
   formatShanghaiTime,
+  formatSkuDescription,
 } from "./format";
 
 describe("number and time formatting", () => {
@@ -28,6 +29,16 @@ describe("number and time formatting", () => {
     expect(formatRelative(null)).toBe("·");
     expect(formatFixedRate(6.674963)).toBe("6.675");
     expect(formatRate(0.0000037899129)).toBe("0.000003789913");
+  });
+
+  it("leaves currency amounts to the actual quote columns", () => {
+    expect(formatSkuDescription("100 GB 存储 · 月付 · 首期$0.49特价×1期")).toBe(
+      "100 GB 存储 · 月付 · 首期特价 × 1 期",
+    );
+    expect(formatSkuDescription("首1期 $0 免费试用")).toBe("首 1 期免费试用");
+    expect(formatSkuDescription("首期0.1折(99% off)×3期")).toBe(
+      "首期0.1折 × 3 期",
+    );
   });
 
   it("treats workbook time as Shanghai wall time and converts upstream UTC", () => {
