@@ -1,12 +1,13 @@
 ---
 import Layout from "../components/Layout.astro";
-import Matrix, { type MatrixOffer } from "../components/Matrix";
+import Matrix from "../components/Matrix.astro";
 import SearchInput from "../components/SearchInput.astro";
 import ViewBar from "../components/ViewBar.astro";
 import {
   describePrice,
   getComparisonMatrix,
   getExchangeRates,
+  getFreeTrials,
   getMetadata,
   getTierRanking,
   isUsdMarket,
@@ -16,6 +17,7 @@ import {
   tiers,
 } from "../lib/data";
 import { formatCny } from "../lib/format";
+import type { MatrixOffer } from "../lib/matrix-display";
 import "../styles/matrix.css";
 
 const rows = getComparisonMatrix()
@@ -71,6 +73,7 @@ const rates = Object.fromEntries(
     unitsPerUsd,
   ]),
 );
+const trials = getFreeTrials();
 const { usdToCny } = getMetadata();
 const pro = getTierRanking("ai-pro-monthly", "year")[0];
 const lead = rows.find(({ country }) => country.code === pro.quote.countryCode)
@@ -78,13 +81,14 @@ const lead = rows.find(({ country }) => country.code === pro.quote.countryCode)
 const description = `比较 ${rows.length} 个国家/地区 × ${tierIds.length} 个档位的 Google One 与 Gemini iOS 价格。AI Pro 原价月付最低 ${lead} ${formatCny(pro.price)}，支持按首期、首年月均和续费排序。`;
 ---
 
-<Layout title="全球订阅价格矩阵" {description} wide dataset>
+<Layout title="全球 App Store 订阅全量比价" {description} wide dataset>
   <div class="page-heading">
-    <h1>价格矩阵</h1>
+    <h1>全量比价</h1>
     <p class="page-note small">
       <span class="mono">{rows.length} × {tierIds.length}</span> · 国家/地区 ×
       比较档位
     </p>
+    <a class="small" href="#trials">免费试用一览 ↓</a>
   </div>
   <ViewBar>
     <SearchInput
@@ -109,5 +113,88 @@ const description = `比较 ${rows.length} 个国家/地区 × ${tierIds.length}
       </select>
     </label>
   </ViewBar>
-  <Matrix client:load {rows} {groups} {rates} {usdToCny} />
+  <Matrix {rows} {groups} {rates} {usdToCny} />
+  <section class="trial-section" id="trials">
+    <h2 class="section-heading">免费试用一览</h2>
+    <div class="panel">
+      <table class="data-table trial-table">
+        <thead>
+          <tr>
+            <th scope="col">产品</th>
+            <th scope="col">试用时长</th>
+            <th scope="col">提供地区数</th>
+            <th scope="col" class="num">试用后最低续费</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trials.map(({ product, months, countries, lowest }) => (
+            <tr>
+              <th scope="row">{product}</th>
+              <td class="trial-months">
+                <span class="mono">{months.join(" / ")}</span> 个月
+              </td>
+              <td class="trial-regions">
+                <details>
+                  <summary>
+                    <span class="mono">{countries.length}</span> 个地区
+                  </summary>
+                  <ul>
+                    {countries.map(({ code, nameZh }) => (
+                      <li>
+                        <a href={`/countries/${code.toLowerCase()}`}>
+                          {nameZh}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              </td>
+              <td class="num trial-renewal">
+                <a href={`/countries/${lowest.country.code.toLowerCase()}`}>
+                  {lowest.country.nameZh}
+                </a>
+                <span class="mono best-text">{formatCny(lowest.price)}/月</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </Layout>
+<style>
+.trial-section {
+  margin-top: 22px;
+  scroll-margin-top: calc(var(--header-height) + 8px);
+}
+.trial-table tbody th {
+  text-align: left;
+}
+.trial-months,
+.trial-regions summary,
+.trial-renewal span {
+  white-space: nowrap;
+}
+.trial-regions summary {
+  cursor: pointer;
+}
+.trial-regions ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  max-width: 20rem;
+  margin-top: 4px;
+  font-size: 12px;
+}
+@media (max-width: 767px) {
+  .trial-table :is(th, td) {
+    padding-inline: 5px;
+  }
+  .trial-renewal span {
+    display: block;
+  }
+  .trial-months {
+    white-space: normal;
+  }
+}
+</style>

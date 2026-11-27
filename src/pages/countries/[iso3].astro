@@ -2,17 +2,26 @@
 import CountryLabel from "../../components/CountryLabel.astro";
 import CountrySkuTable from "../../components/CountrySkuTable.astro";
 import Layout from "../../components/Layout.astro";
-import ViewBar from "../../components/ViewBar.astro";
 import {
   type Country,
-  cnyPerLocal as getCnyPerLocal,
   getCountries,
-  getCountryAdvantages,
+  getCountryMeta,
   getCountryQuotes,
+  getDecisionData,
+  getDefaultDecisions,
+  getMetadata,
   isUsdMarket,
-  tiers,
 } from "../../lib/data";
-import { formatCny, formatRate } from "../../lib/format";
+import { decisionDefaults } from "../../lib/data/decision";
+import {
+  accessLabels,
+  currencyDetail,
+  decisionProduct,
+  giftCardLabels,
+  paymentMethods,
+  planLabel,
+} from "../../lib/decision-labels";
+import { formatCny } from "../../lib/format";
 
 export function getStaticPaths() {
   return getCountries().map((country) => ({
@@ -23,34 +32,38 @@ export function getStaticPaths() {
 const { country } = Astro.props as { country: Country };
 const { code, nameZh, nameEn, currency } = country;
 const quotes = getCountryQuotes(code);
-const advantages = getCountryAdvantages(code).sort((a, b) => a.rank - b.rank);
-const lowest = advantages.filter(({ rank }) => rank === 1).length;
-const cnyPerLocal = getCnyPerLocal(currency);
 const active = quotes.filter(({ status }) => status === "active").length;
-const pro = quotes.find(
-  (quote) =>
-    quote.status === "active" && quote.skuId === "com.google.gemini.2tb.ai.m",
-);
-const best = advantages[0];
-const quoteSummary = best
-  ? `${tiers[best.id].name} 首年月均 ${formatCny(best.price)}/月，全球第 ${best.rank}。`
-  : pro
-    ? `AI Pro 原价月付折合 ${formatCny(pro.renewal.cny)}。`
-    : "";
-const title = `${nameZh} Google One / Gemini iOS 订阅价格`;
-const description = `查看${nameZh}（${code}）的 ${active} 条在售 Google One 与 Gemini iOS 报价，原币为 ${currency}。${quoteSummary}`;
+const meta = getCountryMeta(code);
+const { fxDate } = getMetadata();
+const { usdToCny } = getDecisionData();
+const { cap, m } = decisionDefaults;
+const plans = getDefaultDecisions().map(({ need, result }) => {
+  const index = result.ranked.findIndex(({ market }) => market.code === code);
+  return {
+    need,
+    name: decisionProduct(need, cap),
+    plan: result.ranked[index],
+    rank: index + 1,
+    baseline: result.baseline,
+    href: `/?need=${need}&focus=${code}`,
+  };
+});
+const advantages = plans.filter(({ rank }) => rank > 0 && rank <= 3);
+const pro = plans.find(({ need }) => need === "pro")?.plan;
+const title = `${nameZh} Google One / Gemini iOS 订阅档案`;
+const description = `查询${nameZh}（${code}）的付款条件、各产品最优方案及 ${active} 条在售报价。原币为 ${currency}。${pro ? `AI Pro 用 12 个月的最优方案月均 ${formatCny(pro.monthly)}。` : ""}`;
 ---
 
 <Layout
   {title}
   {description}
   crumbs={[
-    { name: "低价速查", href: "/" },
+    { name: "方案推荐", href: "/" },
     { name: "国家/地区", href: "/countries" },
     { name: nameZh, href: `/countries/${code.toLowerCase()}` },
   ]}
 >
-  <div class="page-heading country-header">
+  <div class="page-heading">
     <div>
       <p class="breadcrumb">
         <a href="/countries">国家/地区</a> / <span class="mono">{code}</span>
@@ -63,62 +76,216 @@ const description = `查看${nameZh}（${code}）的 ${active} 条在售 Google 
         {isUsdMarket(country) && <span class="currency-badge">USD 计价区</span>}
       </div>
     </div>
-    <p class="mono small secondary country-rates">
-      1 CNY = {formatRate(1 / cnyPerLocal)} {currency} · 1 {currency} = ¥{formatRate(
-        cnyPerLocal,
-      )}
-    </p>
   </div>
-  {advantages.length > 0 && (
-    <section class="advantages" aria-label="全球排名优势">
-      <p>
-        按首年月均，<span class="mono">{lowest}</span> 个档位全球最低，
-        <span class="mono">{advantages.length}</span> 个档位进入前 3。
-      </p>
-      <div class="pills">
-        {advantages.map(({ id, rank }) => (
-          <a
-            class:list={["control", { "best-text": rank === 1 }]}
-            href={`/tiers/${id}`}
-          >
-            {tiers[id].name} <span class="mono">#{rank}</span>
-          </a>
-        ))}
+  {meta && (
+    <section class="country-section" aria-labelledby="country-payment">
+      <h2 class="section-heading" id="country-payment">
+        付款条件
+      </h2>
+      <div class="panel country-payment">
+        <p>
+          <strong>{accessLabels[meta.access]}</strong> ·{" "}
+          {giftCardLabels[meta.giftCard]}。
+        </p>
+        <p>官方付款方式：{paymentMethods(meta)}。</p>
+        {meta.notes && <p class="secondary">{meta.notes}</p>}
+        <p class="small secondary">
+          {meta.sources.map((source, index) => (
+            <>
+              <a href={source}>
+                {index === 0 ? "Apple 官方来源" : `来源 ${index + 1}`}
+              </a>{" "}
+              ·{" "}
+            </>
+          ))}
+          复核 <time datetime={meta.reviewedAt}>{meta.reviewedAt}</time>
+          {" · "}
+          <a href="/guide/payment-methods">付款指南</a>
+        </p>
       </div>
     </section>
   )}
-  <ViewBar />
-  <CountrySkuTable {quotes} />
-  <p class="matrix-link"><a href={`/matrix?q=${code}`}>在矩阵中查看 →</a></p>
+
+  <section class="country-section" aria-labelledby="country-plans">
+    <div class="section-heading country-heading">
+      <h2 id="country-plans">该区各产品线最优方案</h2>
+      <p class="small secondary">首次订阅 · 12 个月 · 1 人</p>
+    </div>
+    <div class="panel">
+      <table class="data-table country-plans">
+        <thead>
+          <tr>
+            <th scope="col">产品</th>
+            <th scope="col">方案</th>
+            <th scope="col" class="num">月均</th>
+            <th scope="col" class="num">12 个月较美国</th>
+            <th scope="col">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {plans.map(({ need, name, plan, baseline, href }) => {
+            const gap =
+              plan && baseline ? baseline.total - plan.total : undefined;
+            return (
+              <tr id={`plan-${need}`}>
+                <th scope="row">{name}</th>
+                <td class="country-plan-name">
+                  {plan ? (
+                    <>
+                      {planLabel(plan)}
+                      {plan.offer[8] !== 0 && (
+                        <span class="small muted"> · 特定入口</span>
+                      )}
+                    </>
+                  ) : (
+                    "无活跃报价"
+                  )}
+                </td>
+                <td class="num country-plan-price">
+                  {plan ? (
+                    <button
+                      type="button"
+                      class="price-action"
+                      data-price-detail
+                      aria-haspopup="dialog"
+                      title={currencyDetail(
+                        plan,
+                        plan.local / m,
+                        usdToCny,
+                        fxDate,
+                      )}
+                    >
+                      {formatCny(plan.monthly)}/月
+                    </button>
+                  ) : (
+                    <span class="muted">·</span>
+                  )}
+                </td>
+                <td class="num country-plan-gap">
+                  <span class="country-gap-mobile small secondary">
+                    较美国{" "}
+                  </span>
+                  {gap === undefined ? (
+                    <span class="muted">·</span>
+                  ) : gap === 0 ? (
+                    "同价"
+                  ) : (
+                    <span class:list={{ "best-text": gap > 0 }}>
+                      {gap > 0 ? "省" : "多"} {formatCny(Math.abs(gap))}
+                    </span>
+                  )}
+                </td>
+                <td class="country-plan-link">
+                  <a href={href}>在决策器中查看 →</a>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="country-section" aria-labelledby="country-advantages">
+    <h2 class="section-heading" id="country-advantages">全球前 3 的产品线</h2>
+    {advantages.length ? (
+      <ul class="pills">
+        {advantages.map(({ name, rank, href }) => (
+          <li>
+            <a
+              class:list={["control", { "best-text": rank === 1 }]}
+              href={href}
+            >
+              {name} <span class="mono">#{rank}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="secondary">当前默认条件下，没有产品线进入全球前 3。</p>
+    )}
+  </section>
+
+  <section class="country-section" aria-labelledby="country-sku-heading">
+    <div class="section-heading country-heading">
+      <h2 id="country-sku-heading">完整 SKU 报价</h2>
+      <a href={`/matrix?q=${code}`}>在全量比价中查看 →</a>
+    </div>
+    <CountrySkuTable {quotes} />
+  </section>
 </Layout>
 <style>
-.country-header {
-  align-items: flex-end;
-}
 .country-identity {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 4px 8px;
 }
-.country-header,
-.advantages {
-  border-bottom: 1px solid var(--border-default);
-  margin-bottom: 12px;
+.country-heading {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 3px 8px;
 }
-.advantages {
-  padding-bottom: 12px;
+.country-section + .country-section {
+  margin-top: 20px;
 }
-.advantages .pills {
-  margin-top: 6px;
+.country-payment {
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
 }
-.advantages .best-text {
-  color: var(--best);
+.country-plans th[scope="row"] {
+  text-align: left;
 }
-.matrix-link {
-  margin-top: 16px;
+.country-gap-mobile {
+  display: none;
 }
-:global(#country-skus) {
-  margin-top: 12px;
+.country-plan-price button {
+  text-decoration: underline dotted var(--border-strong);
+  text-underline-offset: 3px;
+}
+@media (max-width: 767px) {
+  .country-plans,
+  .country-plans tbody {
+    display: block;
+  }
+  .country-plans thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .country-plans tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 8px;
+    padding: 7px 8px;
+  }
+  .country-plans tr + tr {
+    border-top: 1px solid var(--border-default);
+  }
+  .country-plans :is(th, td) {
+    padding: 0;
+    border: 0;
+  }
+  .country-plan-price,
+  .country-plan-gap {
+    grid-column: 2;
+  }
+  .country-plan-price {
+    grid-row: 1;
+  }
+  .country-plan-gap {
+    grid-row: 2;
+    font-size: 11px;
+  }
+  .country-gap-mobile {
+    display: inline;
+    font-family: var(--font-ui);
+  }
+  .country-plan-link {
+    font-size: 12px;
+  }
 }
 </style>

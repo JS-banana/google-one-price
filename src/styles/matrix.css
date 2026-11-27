@@ -95,6 +95,10 @@
   color: var(--text-primary);
   font-size: 12px;
 }
+.matrix-head-title :where(button) > :where(span:first-child) {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
 .matrix-head-title a {
   padding-inline: 2px;
   color: var(--text-secondary);
@@ -109,8 +113,8 @@
   color: var(--muted-ink);
 }
 .matrix-min {
-  white-space: nowrap;
   font-size: 10px;
+  overflow-wrap: anywhere;
 }
 .full-matrix thead .matrix-column-hover {
   background: var(--bg-hover);
@@ -118,7 +122,7 @@
 .full-matrix .matrix-frozen {
   position: sticky;
   left: 0;
-  z-index: 2;
+  z-index: 3;
   border-right: 1px solid var(--border-strong);
 }
 .full-matrix thead .matrix-frozen {
@@ -180,12 +184,11 @@
   justify-content: center;
   gap: 4px;
   padding-inline: 4px;
-  white-space: nowrap;
   line-height: 12px;
 }
 .matrix-sub > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 html[data-original="off"] .full-matrix .matrix-cell {
   height: 34px;

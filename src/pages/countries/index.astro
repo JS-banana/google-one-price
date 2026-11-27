@@ -4,26 +4,19 @@ import Layout from "../../components/Layout.astro";
 import SearchInput from "../../components/SearchInput.astro";
 import {
   getCountries,
-  getCountryAdvantages,
-  getTierRanking,
+  getCountryMeta,
+  getDefaultDecisions,
   isUsdMarket,
   regions,
 } from "../../lib/data";
-import { formatCny } from "../../lib/format";
+import { accessLabels } from "../../lib/decision-labels";
 
 const countries = getCountries();
-const counts = new Map(
-  countries.map(({ code }) => [
-    code,
-    getCountryAdvantages(code).filter(({ rank }) => rank === 1).length,
-  ]),
+const leaders = getDefaultDecisions().flatMap(({ result }) =>
+  result.ranked.slice(0, 3),
 );
-const pro = getTierRanking("ai-pro-monthly", "year")[0];
-const countryName = countries.find(
-  ({ code }) => code === pro.quote.countryCode,
-)?.nameZh;
-const title = "国家/地区";
-const description = `浏览 ${countries.length} 个国家/地区的 Google One 与 Gemini iOS 报价。AI Pro 原价月付当前最低为 ${countryName} ${formatCny(pro.price)}/月，可按地区或货币查找。`;
+const title = "App Store 国家／地区订阅档案";
+const description = `按国家、地区或币种查询 ${countries.length} 个 App Store 市场的 Google One、Gemini 最优方案、付款条件、完整 SKU 和历史报价。`;
 ---
 
 <Layout {title} {description}>
@@ -47,7 +40,10 @@ const description = `浏览 ${countries.length} 个国家/地区的 Google One �
           <ul class="country-grid panel">
             {group.map((country) => {
               const { code, currency, nameZh, nameEn, iso2 } = country;
-              const firsts = counts.get(code) ?? 0;
+              const topThree = leaders.filter(
+                ({ market }) => market.code === code,
+              ).length;
+              const access = getCountryMeta(code)?.access ?? "unknown";
               return (
                 <li
                   data-match={`${nameZh} ${nameEn} ${code} ${iso2} ${currency}`}
@@ -66,9 +62,10 @@ const description = `浏览 ${countries.length} 个国家/地区的 Google One �
                         {currency}
                       </span>
                     </span>
-                    {firsts > 0 && (
+                    <span class="small secondary">{accessLabels[access]}</span>
+                    {topThree > 0 && (
                       <span class="badge best small">
-                        最低 <span class="mono">×{firsts}</span>
+                        前 3 <span class="mono">×{topThree}</span>
                       </span>
                     )}
                   </a>

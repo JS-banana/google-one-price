@@ -2,9 +2,9 @@
 import {
   hasHistoricalPriceAnomaly,
   isGlobalTierLowest,
-  priceViews,
   type Quote,
   quoteLine,
+  quoteTier,
   tierGroups,
 } from "../lib/data";
 import { formatCny, formatLocal, formatSkuDescription } from "../lib/format";
@@ -31,7 +31,6 @@ const groups = tierGroups.map((group) => ({
   id="country-skus"
   data-filter-line="all"
   data-show-history="no"
-  data-sorted-view="year"
   aria-label="SKU 报价"
 >
   <div class="sku-controls">
@@ -79,17 +78,14 @@ const groups = tierGroups.map((group) => ({
             const { intro, currency, renewal } = quote;
             const unit = display.annual ? "/年" : "";
             const isHistorical = quote.status === "historical";
-            const lowest = priceViews.filter((view) =>
-              isGlobalTierLowest(quote, view, display.prices[view]),
+            const lowest = isGlobalTierLowest(
+              quote,
+              "year",
+              display.prices.year,
             );
+            const tier = quoteTier(quote);
             return (
-              <tr
-                data-sku-row={quote.status}
-                data-intro={display.prices.intro}
-                data-year={display.prices.year}
-                data-renew={display.prices.renew}
-                title={quote.source}
-              >
+              <tr data-sku-row={quote.status} title={quote.source}>
                 <th scope="row" class="sku-name">
                   <p>{formatSkuDescription(quote.description)}</p>
                   <button
@@ -146,18 +142,12 @@ const groups = tierGroups.map((group) => ({
                         <span class="badge warn">源数据异常</span>
                       )}
                     </span>
+                  ) : lowest && tier ? (
+                    <a class="badge best" href={`/tiers/${tier}`}>
+                      全球最低
+                    </a>
                   ) : (
-                    priceViews.map((view) => (
-                      <span
-                        class:list={[
-                          "view-content",
-                          lowest.includes(view) ? "badge best" : "muted",
-                        ]}
-                        data-price-view={view}
-                      >
-                        {lowest.includes(view) ? "全球最低" : "·"}
-                      </span>
-                    ))
+                    <span class="muted">·</span>
                   )}
                 </td>
               </tr>

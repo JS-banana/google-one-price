@@ -21,6 +21,11 @@ export function getStaticPaths() {
 const { id } = Astro.props as { id: TierId };
 const tier = tiers[id];
 const details = getTierDetails(id);
+const isUltra = id === "storage-30tb-monthly";
+const isPro = id === "storage-5tb-monthly";
+const need = isUltra ? "ultra" : isPro ? "pro" : tier.line;
+const cap = id === "storage-10tb-monthly" ? "10tb" : null;
+const decisionHref = `/?need=${need}${cap ? `&cap=${cap}` : ""}`;
 const line = productLines[tier.line];
 const countries = getCountries();
 const defaultRanking = getTierRanking(id, "year");
@@ -35,13 +40,13 @@ const description = `${tier.name} 覆盖 ${defaultRanking.length} 个国家/地�
   title={tier.name}
   {description}
   crumbs={[
-    { name: "低价速查", href: "/" },
+    { name: "全量比价", href: "/matrix" },
     { name: tier.name, href: `/tiers/${id}` },
   ]}
 >
   <div class="page-heading">
     <div>
-      <p class="breadcrumb"><a href="/">低价速查</a> / {line.name}</p>
+      <p class="breadcrumb"><a href="/matrix">全量比价</a> / {line.name}</p>
       <h1>{tier.name}</h1>
       <p class="tier-terms secondary">
         包含 <span class="mono">{details.skuIds.length}</span> 个{" "}
@@ -60,6 +65,15 @@ const description = `${tier.name} 覆盖 ${defaultRanking.length} 个国家/地�
       )}
     </div>
   </div>
+  <p class="tier-recalculate panel">
+    <a href={decisionHref}>按你的时长和人数重新计算 →</a>
+    {id === "storage-20tb-monthly" && (
+      <span class="small secondary">
+        {" "}
+        · 此档含 5x Ultra，决策器可比较纯存储及 20x Ultra。
+      </span>
+    )}
+  </p>
   <ViewBar>
     <label class="control"
       ><input type="checkbox" data-usd-switch> 隐藏 USD 计价区</label
@@ -102,6 +116,10 @@ const description = `${tier.name} 覆盖 ${defaultRanking.length} 个国家/地�
   </section>
 </Layout>
 <style>
+.tier-recalculate {
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
 .tier-terms {
   margin-top: 4px;
 }

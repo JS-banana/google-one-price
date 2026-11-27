@@ -14,18 +14,6 @@
     }
   };
 
-  function syncCountryOrder() {
-    const view = root.dataset.view;
-    const table = document.getElementById("country-skus");
-    if (!table || table.dataset.sortedView === view) return;
-    for (const group of table.querySelectorAll("[data-sku-group]")) {
-      const rows = [...group.querySelectorAll("[data-sku-row]")];
-      rows.sort((a, b) => Number(a.dataset[view]) - Number(b.dataset[view]));
-      group.append(...rows);
-    }
-    table.dataset.sortedView = view;
-  }
-
   const feedback = new WeakMap();
   const popover = document.getElementById("price-detail");
   function showPriceDetail(trigger, text) {
@@ -128,7 +116,6 @@
   });
 
   document.addEventListener("g1:preferences", syncPreferences);
-  document.addEventListener("g1:preferences", syncCountryOrder);
   const applyPreferences = () => {
     const params = new URLSearchParams(location.search);
     const view = params.get("view");
@@ -149,10 +136,11 @@
     } catch {}
     document.dispatchEvent(new Event("g1:preferences"));
   };
-  window.addEventListener("pageshow", applyPreferences);
-  window.addEventListener("popstate", applyPreferences);
-  syncPreferences();
-  syncCountryOrder();
+  if (document.querySelector("[data-view-radio]")) {
+    window.addEventListener("pageshow", applyPreferences);
+    window.addEventListener("popstate", applyPreferences);
+    syncPreferences();
+  }
 
   const openChange = () => {
     const id = location.hash.slice(1);

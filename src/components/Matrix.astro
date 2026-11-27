@@ -1,0 +1,277 @@
+---
+import {
+  type MatrixData,
+  matrixLeaders,
+  matrixPrices,
+  matrixState,
+  renderMatrixList,
+  renderMatrixRows,
+} from "../lib/matrix-display";
+
+type Props = MatrixData;
+const data = Astro.props;
+const state = matrixState(data, "year", false, new URLSearchParams());
+const price = matrixPrices(data);
+const leaders = matrixLeaders(state, price);
+const first = state.columns[0];
+const payload = JSON.stringify(data).replaceAll("<", "\\u003c");
+---
+
+<div class="matrix-shell" data-matrix-mode="list">
+  <script
+    is:inline
+    type="application/json"
+    id="matrix-data"
+    set:html={payload}
+  ></script>
+  <div class="matrix-status">
+    <button class="control matrix-mode-button" type="button">矩阵视图</button>
+  </div>
+  <p class="empty-message panel" id="matrix-empty" role="status" hidden>
+    找不到符合筛选条件的地区。
+  </p>
+  <div class="matrix-scroll-frame" data-more-columns="true">
+    <section class="matrix-scroller panel" aria-label="可滚动的价格矩阵">
+      <table
+        class="data-table full-matrix"
+        style={`--matrix-columns: ${state.columns.length}`}
+        aria-label="全球 iOS 订阅价格矩阵"
+      >
+        <colgroup>
+          <col class="matrix-country-column">
+        </colgroup>
+        {data.groups.map(({ columns }) => (
+          <colgroup>
+            <col span={columns.length} class="matrix-price-column">
+          </colgroup>
+        ))}
+        <thead>
+          <tr class="matrix-group-head">
+            <th scope="col" rowspan="2" class="matrix-frozen">国家/地区</th>
+            {data.groups.map(({ name, columns }) => (
+              <th scope="colgroup" colspan={columns.length}>
+                {name}
+              </th>
+            ))}
+          </tr>
+          <tr class="matrix-tier-head">
+            {state.columns.map(({ id, name, shortName }, index) => (
+              <th scope="col">
+                <div class="matrix-head-title">
+                  <button
+                    type="button"
+                    data-matrix-sort={index}
+                    aria-label={`${name}，升序`}
+                  >
+                    <span>{shortName}</span>
+                    <span class="sort-arrow" aria-hidden="true">
+                      ↕
+                    </span>
+                  </button>
+                  <a
+                    href={`/tiers/${id}`}
+                    aria-label={`查看 ${name} 档位详情`}
+                    title={name}
+                  >
+                    ↗
+                  </a>
+                </div>
+                <span class="matrix-min mono small muted">
+                  {leaders[index]}
+                </span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody set:html={renderMatrixRows(state, price)}></tbody>
+      </table>
+    </section>
+  </div>
+  <div class="matrix-list">
+    <fieldset class="pills matrix-tier-pills" aria-label="选择档位">
+      {state.columns.map(({ id, name, pill }, index) => (
+        <button
+          type="button"
+          class="control"
+          aria-pressed={index === 0}
+          data-matrix-tier={id}
+          title={name}
+        >
+          {pill}
+        </button>
+      ))}
+    </fieldset>
+    <p class="matrix-list-link small">
+      <a href={`/tiers/${first.id}`}>{first.name} →</a>
+    </p>
+    <div
+      class="panel matrix-list-view"
+      set:html={renderMatrixList(state, price)}
+    ></div>
+  </div>
+</div>
+<script>
+import { type PriceView, priceViews } from "../lib/data/views";
+import {
+  type MatrixData,
+  matrixCellDetail,
+  matrixLeaders,
+  matrixPrices,
+  matrixState,
+  renderMatrixList,
+  renderMatrixRows,
+} from "../lib/matrix-display";
+
+const shell = document.querySelector<HTMLElement>(".matrix-shell");
+const payload = document.getElementById("matrix-data");
+if (shell && payload?.textContent) {
+  const data: MatrixData = JSON.parse(payload.textContent);
+  const prices = matrixPrices(data);
+  function element<T extends Element = HTMLElement>(
+    selector: string,
+    root: ParentNode = document,
+  ): T {
+    const target = root.querySelector<T>(selector);
+    if (!target) throw new Error(`Missing matrix element: ${selector}`);
+    return target;
+  }
+  const matrix = shell;
+  const list = element(".matrix-list");
+  const listView = element(".matrix-list-view");
+  const listLink = element<HTMLAnchorElement>(".matrix-list-link a");
+  const frame = element(".matrix-scroll-frame");
+  const scroller = element(".matrix-scroller");
+  scroller.tabIndex = 0;
+  const body = element(".full-matrix tbody");
+  const mode = element<HTMLButtonElement>(".matrix-mode-button");
+  const empty = element("#matrix-empty");
+  const visible = element("#matrix-visible");
+  const heads = [
+    ...shell.querySelectorAll<HTMLTableCellElement>(".matrix-tier-head th"),
+  ];
+  const tierButtons = [
+    ...shell.querySelectorAll<HTMLButtonElement>("[data-matrix-tier]"),
+  ];
+  let activeHead: HTMLTableCellElement | undefined;
+  let state = matrixState(data, "year", false, new URLSearchParams());
+  let previous = "year|shown|";
+  function syncScroll() {
+    frame.dataset.moreColumns = String(
+      scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft > 1,
+    );
+    scroller.classList.toggle("scrolled", scroller.scrollLeft > 0);
+  }
+  function sync() {
+    const query = new URLSearchParams(location.search);
+    const { view, usd } = document.documentElement.dataset;
+    const priceView = priceViews.includes(view as PriceView)
+      ? (view as PriceView)
+      : "year";
+    const signature = `${priceView}|${usd}|${location.search}`;
+    if (signature === previous) return;
+    previous = signature;
+    state = matrixState(data, priceView, usd === "hidden", query);
+    const hasRows = state.sorted.length > 0;
+    empty.hidden = hasRows;
+    frame.hidden = !hasRows;
+    list.hidden = !hasRows;
+    matrix.dataset.matrixMode =
+      query.get("mode") === "matrix" ? "matrix" : "list";
+    mode.textContent =
+      matrix.dataset.matrixMode === "matrix" ? "榜单视图" : "矩阵视图";
+    visible.textContent = `${state.sorted.length} / ${data.rows.length}`;
+
+    const leaders = matrixLeaders(state, prices);
+    heads.forEach((head, index) => {
+      const selected = state.sort === index;
+      if (selected)
+        head.setAttribute(
+          "aria-sort",
+          state.descending ? "descending" : "ascending",
+        );
+      else head.removeAttribute("aria-sort");
+      element(".sort-arrow", head).textContent = selected
+        ? state.descending
+          ? "▼"
+          : "▲"
+        : "↕";
+      element("button", head).setAttribute(
+        "aria-label",
+        `${state.columns[index].name}，${selected ? (state.descending ? "恢复默认排序" : "降序") : "升序"}`,
+      );
+      element(".matrix-min", head).textContent = leaders[index];
+    });
+    const tier = state.columns[state.tier];
+    for (const button of tierButtons) {
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.matrixTier === tier.id),
+      );
+    }
+    listLink.href = `/tiers/${tier.id}`;
+    listLink.textContent = `${tier.name} →`;
+    body.innerHTML = renderMatrixRows(state, prices);
+    listView.innerHTML = renderMatrixList(state, prices);
+    syncScroll();
+  }
+  function update(values: Record<string, string>) {
+    const url = new URL(location.href);
+    for (const [key, value] of Object.entries(values)) {
+      if (value) url.searchParams.set(key, value);
+      else url.searchParams.delete(key);
+    }
+    history.replaceState(history.state, "", url);
+    sync();
+  }
+  shell.addEventListener("click", (event) => {
+    const button = (event.target as Element).closest("button");
+    if (!button) return;
+    if (button.hasAttribute("data-matrix-price")) {
+      const row = button.closest("tr");
+      const cell = button.closest("td");
+      if (row && cell) {
+        const text = matrixCellDetail(
+          state,
+          prices,
+          row.sectionRowIndex,
+          cell.cellIndex - 1,
+          body.contains(row),
+        );
+        if (text)
+          document.dispatchEvent(
+            new CustomEvent("g1:price-detail", {
+              detail: { trigger: button, text },
+            }),
+          );
+      }
+    }
+    if (button === mode)
+      update({ mode: shell.dataset.matrixMode === "matrix" ? "" : "matrix" });
+    if (button.dataset.matrixTier) update({ tier: button.dataset.matrixTier });
+    if (button.dataset.matrixSort !== undefined) {
+      const index = Number(button.dataset.matrixSort);
+      const id = state.columns[index].id;
+      if (state.sort !== index) update({ sort: id, dir: "asc" });
+      else if (!state.descending) update({ sort: id, dir: "desc" });
+      else update({ sort: "", dir: "" });
+    }
+  });
+  function highlight(head?: HTMLTableCellElement) {
+    if (head === activeHead) return;
+    activeHead?.classList.remove("matrix-column-hover");
+    head?.classList.add("matrix-column-hover");
+    activeHead = head;
+  }
+  body.addEventListener("pointerover", (event) => {
+    const cell = (event.target as Element).closest<HTMLTableCellElement>("td");
+    highlight(cell ? heads[cell.cellIndex - 1] : undefined);
+  });
+  body.addEventListener("pointerleave", () => highlight());
+  scroller.addEventListener("scroll", syncScroll, { passive: true });
+  new ResizeObserver(syncScroll).observe(scroller);
+  document.addEventListener("g1:preferences", sync);
+  document.addEventListener("g1:matrix", sync);
+  window.addEventListener("pageshow", sync);
+  sync();
+}
+</script>
