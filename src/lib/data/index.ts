@@ -24,7 +24,6 @@ import {
 import { type PriceView, priceViews } from "./views.ts";
 
 export { groupChanges, summarizeChanges } from "./changes.ts";
-export { fxProviderUrl } from "./fx.ts";
 export type { Matrix, MatrixSkuId } from "./matrix.ts";
 export {
   hasHistoricalPriceAnomaly,
@@ -174,6 +173,8 @@ export function getExchangeRates(): readonly ExchangeRate[] {
     ...fx.rates[currency],
   }));
 }
+
+export { fxProviderUrl } from "./fx.ts";
 
 export function getQuoteCount(): number {
   return data.quotes.length;
