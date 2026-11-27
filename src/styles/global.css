@@ -33,6 +33,7 @@
   --warn-bg: #fff0e6;
   --caution: #a16207;
   --muted-ink: color-mix(in srgb, var(--text-muted) 70%, var(--text-primary));
+  --caution-ink: color-mix(in srgb, var(--caution) 82%, var(--text-primary));
   --font-ui:
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Noto Sans CJK SC",
     system-ui, sans-serif;
@@ -140,7 +141,7 @@ time,
   color: var(--text-secondary);
 }
 .currency-badge {
-  color: var(--caution);
+  color: var(--caution-ink);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -216,7 +217,7 @@ main {
   background: var(--warn-bg);
 }
 .badge.caution {
-  color: var(--caution);
+  color: var(--caution-ink);
   background: var(--bg-subtle);
 }
 .badge.best {
