@@ -2,6 +2,8 @@
 import Layout from "../components/Layout.astro";
 import SearchInput from "../components/SearchInput.astro";
 import {
+  cnyPerLocal,
+  fxProviderUrl,
   getCountries,
   getExchangeRates,
   getMetadata,
@@ -13,7 +15,7 @@ const rates = getExchangeRates();
 const countries = getCountries();
 const proMarkets = getTierRanking("ai-pro-promo-yearly").length;
 const plusMarkets = getTierRanking("ai-plus-promo-yearly").length;
-const { usdToCny, fxProvider, fxPublishedAt, refreshedAt } = getMetadata();
+const { usdToCny, fxProvider, fxDate, pricesObservedAt } = getMetadata();
 const title = "汇率与价格说明";
 const description = `查看 ${rates.length} 种币种的人民币折算，当前 1 USD = ${formatRate(usdToCny)} CNY。了解 Google One 与 Gemini iOS 首期、首年月均、续费及 USD 计价区的口径。`;
 ---
@@ -27,9 +29,9 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
         <dt>报价来源与更新</dt>
         <dd>
           数据来自 iOS App Store
-          商品目录监控，按小时检查。当前报价快照为北京时间{" "}
-          <time datetime={`${refreshedAt}+08:00`}
-            >{formatShanghaiTime(refreshedAt)}</time
+          商品目录监控，按小时检查。价格观测时间为北京时间{" "}
+          <time datetime={`${pricesObservedAt}+08:00`}
+            >{formatShanghaiTime(pricesObservedAt)}</time
           >。
         </dd>
       </div>
@@ -97,10 +99,8 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
         <p class="secondary">
           基准
           <strong class="mono">1 USD = {formatRate(usdToCny)} CNY</strong> ·
-          {fxProvider} 发布于
-          <time datetime={fxPublishedAt}
-            >{formatShanghaiTime(fxPublishedAt)}</time
-          >（北京时间）
+          汇率日期 <time datetime={fxDate}>{fxDate}</time> ·
+          <a href={fxProviderUrl}>{fxProvider}</a>
         </p>
       </div>
       <SearchInput
@@ -122,7 +122,7 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
           </tr>
         </thead>
         <tbody>
-          {rates.map(({ currency, nameZh, unitsPerUsd }) => {
+          {rates.map(({ currency, nameZh, unitsPerUsd, date }) => {
             const locales = countries.filter(
               (country) => country.currency === currency,
             );
@@ -140,8 +140,15 @@ const description = `查看 ${rates.length} 种币种的人民币折算，当前
                   <span class="rate-mobile-name">{nameZh}</span>
                 </th>
                 <td class="rate-name">{nameZh}</td>
-                <td class="num">{formatRate(unitsPerUsd)}</td>
-                <td class="num">{formatRate(usdToCny / unitsPerUsd)}</td>
+                <td class="num">
+                  {formatRate(unitsPerUsd)}
+                  {date !== fxDate && (
+                    <div class="small muted">
+                      <time datetime={date}>{date}</time>
+                    </div>
+                  )}
+                </td>
+                <td class="num">{formatRate(cnyPerLocal(currency))}</td>
                 <td class="rate-locales">
                   {locales.length === 0 ? (
                     <span class="muted">·</span>

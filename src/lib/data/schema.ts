@@ -38,10 +38,7 @@ export const skuSchema = z.object({
     .nullable(),
 });
 
-const priceSchema = z.object({
-  local: amountSchema,
-  cny: amountSchema,
-});
+const localPriceSchema = z.object({ local: amountSchema });
 
 export const quoteSchema = z
   .object({
@@ -51,9 +48,9 @@ export const quoteSchema = z
     currency: currencySchema,
     source: sourceSchema,
     status: z.enum(["active", "historical"]),
-    intro: priceSchema.nullable(),
+    intro: localPriceSchema.nullable(),
     introPeriods: z.int().positive().nullable(),
-    renewal: priceSchema,
+    renewal: localPriceSchema,
   })
   .refine(
     ({ intro, introPeriods }) =>
@@ -73,43 +70,35 @@ export const changeSchema = z
     skuId: skuIdSchema,
     description: textSchema,
     currency: currencySchema,
-    intro: priceSchema.nullable(),
-    renewal: priceSchema,
+    intro: localPriceSchema.nullable(),
+    renewal: localPriceSchema,
     introPeriods: z.number().int().positive().nullable(),
-    reportedIntroCny: amountSchema.nullable(),
-    reportedRenewalCny: amountSchema,
   })
   .refine(
     ({ intro, introPeriods }) => (intro === null) === (introPeriods === null),
     { message: "Intro price and periods must appear together" },
   );
 
-export const exchangeRateSchema = z.object({
-  currency: currencySchema,
-  nameZh: textSchema,
-  unitsPerUsd: rateSchema,
-});
-
 export const snapshotSchema = z.object({
   metadata: z.object({
-    refreshedAt: dateTimeSchema,
+    pricesObservedAt: dateTimeSchema,
     changesCheckedAt: dateTimeSchema,
-    usdToCny: rateSchema,
-    fxProvider: textSchema,
-    fxPublishedAt: z.iso.datetime(),
   }),
   countries: z.array(countrySchema).length(60),
   skus: z.array(skuSchema).min(1),
   quotes: z.array(quoteSchema).min(1),
   changes: z.array(changeSchema),
-  exchangeRates: z.array(exchangeRateSchema).min(1),
 });
 
 export type Country = z.infer<typeof countrySchema>;
 export type Sku = z.infer<typeof skuSchema>;
-export type Quote = z.infer<typeof quoteSchema>;
-export type Price = z.infer<typeof priceSchema>;
-export type Change = z.infer<typeof changeSchema>;
-export type ExchangeRate = z.infer<typeof exchangeRateSchema>;
+export type LocalQuote = z.infer<typeof quoteSchema>;
+export type LocalChange = z.infer<typeof changeSchema>;
+export type Price = z.infer<typeof localPriceSchema> & { cny: number };
+export type WithCny<T> = Omit<T, "intro" | "renewal"> & {
+  intro: Price | null;
+  renewal: Price;
+};
+export type Quote = WithCny<LocalQuote>;
+export type Change = WithCny<LocalChange>;
 export type Snapshot = z.infer<typeof snapshotSchema>;
-export type Metadata = Snapshot["metadata"];

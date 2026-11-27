@@ -1,16 +1,17 @@
+import { existsSync, readFileSync } from "node:fs";
+import baselineFx from "../../data/fx.json" with { type: "json" };
 import snapshot from "../../data/snapshot.json" with { type: "json" };
+import {
+  currencyNames,
+  type ExchangeRate,
+  fxSchema,
+  requiredCurrencies,
+  selectFx,
+} from "./fx.ts";
 import { buildMatrix, type Matrix } from "./matrix.ts";
 import { createPricing } from "./money.ts";
 import { summarizeFreeTrials } from "./offers.ts";
-import type {
-  Change,
-  Country,
-  ExchangeRate,
-  Metadata,
-  Quote,
-  Sku,
-  Snapshot,
-} from "./schema.ts";
+import type { Change, Country, Quote, Sku, Snapshot } from "./schema.ts";
 import {
   quoteTier,
   type RankedQuote,
@@ -24,6 +25,7 @@ import {
 import { type PriceView, priceViews } from "./views.ts";
 
 export { groupChanges, summarizeChanges } from "./changes.ts";
+export { fxProviderUrl } from "./fx.ts";
 export type { Matrix, MatrixSkuId } from "./matrix.ts";
 export {
   hasHistoricalPriceAnomaly,
@@ -35,8 +37,6 @@ export {
 export type {
   Change,
   Country,
-  ExchangeRate,
-  Metadata,
   Price,
   Quote,
   Sku,
@@ -57,12 +57,39 @@ export {
 } from "./tiers.ts";
 export { type PriceView, priceViews, relativeToLowest } from "./views.ts";
 
-const data = snapshot as Snapshot;
-export const { priceFor, describePrice } = createPricing(data);
-export const getFreeTrials = () => summarizeFreeTrials(data);
+const baseline = fxSchema.parse(baselineFx);
+const livePath = "src/data/fx.live.json";
+function loadFx() {
+  if (process.env.FX_LIVE !== "1" || !existsSync(livePath)) return baseline;
+  try {
+    const fx = selectFx(baseline, JSON.parse(readFileSync(livePath, "utf8")));
+    if (fx !== baseline) return fx;
+    console.warn(`Invalid ${livePath}. Using src/data/fx.json.`);
+  } catch (error) {
+    console.warn(
+      `Could not read ${livePath} (${error}). Using src/data/fx.json.`,
+    );
+  }
+  return baseline;
+}
+const fx = loadFx();
+const source = snapshot as Snapshot;
+const pricing = createPricing(source.skus, fx);
+const data = {
+  ...source,
+  quotes: source.quotes.map((quote) => pricing.withCny(quote)),
+  changes: source.changes.map((change) => pricing.withCny(change)),
+};
+export const { priceFor, describePrice, cnyPerLocal } = pricing;
+export const getFreeTrials = () => summarizeFreeTrials(source, describePrice);
 
-export function getMetadata(): Metadata {
-  return data.metadata;
+export function getMetadata() {
+  return {
+    ...data.metadata,
+    fxDate: fx.date,
+    fxProvider: fx.provider,
+    usdToCny: fx.rates.CNY.unitsPerUsd,
+  };
 }
 
 export function getCountries(): readonly Country[] {
@@ -93,7 +120,7 @@ export function getTierRanking(
   const key = `${tierId}/${view}`;
   const cached = rankings.get(key);
   if (cached) return cached.slice();
-  const ranking = rankTier(data, tierId, view);
+  const ranking = rankTier(data.quotes, pricing, tierId, view);
   rankings.set(key, ranking);
   return ranking.slice();
 }
@@ -138,7 +165,7 @@ export function isGlobalTierLowest(
 }
 
 export function getTierDetails(id: TierId) {
-  const quotes = tierQuotes(data, id);
+  const quotes = tierQuotes(data.quotes, id);
   return {
     skuIds: tiers[id].skus,
     introPeriods: tierOfferTerms(quotes),
@@ -150,7 +177,11 @@ export function getChanges(): readonly Change[] {
 }
 
 export function getExchangeRates(): readonly ExchangeRate[] {
-  return data.exchangeRates;
+  return requiredCurrencies.map((currency) => ({
+    currency,
+    nameZh: currencyNames[currency],
+    ...fx.rates[currency],
+  }));
 }
 
 export function getQuoteCount(): number {

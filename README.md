@@ -33,13 +33,14 @@ The site uses Astro, TypeScript, Tailwind CSS v4, and an interactive matrix isla
 3. Run `pnpm data:check data/source/prices.xlsx` against the same workbook, then review the snapshot diff.
 4. Run `pnpm test` and `pnpm build`. Commit the snapshot and get it onto `main`. A successful CI run on `main` triggers deployment.
 
-CI builds from the checked-in snapshot. For the workbook schema and reconciliation rules, see the [data source guide](docs/data-source.md).
+The workbook supplies original-currency prices and their observation time. Builds convert prices to CNY using [Frankfurter](https://frankfurter.dev/) v2 blended reference rates and display the rate date separately. Local builds and CI use the checked-in FX baseline. Production builds try the latest rates daily and on deploys from `main`, and fall back to the baseline if the update fails. Run `pnpm fx:update` to refresh that baseline. [Data source guide](docs/data-source.md)
 
 ## Project structure
 
 ```text
 scripts/                 Workbook import and reconciliation
 src/data/snapshot.json   Normalized price snapshot
+src/data/fx.json         Frankfurter FX baseline
 src/lib/data/            Schema, price calculations, and page data
 src/pages/               Astro static routes
 public/                  Flags, fonts, and other static assets

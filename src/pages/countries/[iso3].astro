@@ -5,11 +5,10 @@ import Layout from "../../components/Layout.astro";
 import ViewBar from "../../components/ViewBar.astro";
 import {
   type Country,
+  cnyPerLocal as getCnyPerLocal,
   getCountries,
   getCountryAdvantages,
   getCountryQuotes,
-  getExchangeRates,
-  getMetadata,
   isUsdMarket,
   tiers,
 } from "../../lib/data";
@@ -26,9 +25,7 @@ const { code, nameZh, nameEn, currency } = country;
 const quotes = getCountryQuotes(code);
 const advantages = getCountryAdvantages(code).sort((a, b) => a.rank - b.rank);
 const lowest = advantages.filter(({ rank }) => rank === 1).length;
-const fx = getExchangeRates().find((rate) => rate.currency === currency);
-if (!fx) throw new Error(`Missing exchange rate for ${currency}`);
-const cnyPerLocal = getMetadata().usdToCny / fx.unitsPerUsd;
+const cnyPerLocal = getCnyPerLocal(currency);
 const active = quotes.filter(({ status }) => status === "active").length;
 const pro = quotes.find(
   (quote) =>

@@ -1,0 +1,227 @@
+{
+  "date": "2026-11-27",
+  "provider": "Frankfurter",
+  "base": "USD",
+  "rates": {
+    "AED": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 3.6725
+    },
+    "ARS": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1601.44
+    },
+    "AUD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1.5077
+    },
+    "BDT": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 125.01
+    },
+    "BRL": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 5.7823
+    },
+    "CAD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1.4243
+    },
+    "CHF": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 0.83385
+    },
+    "CLP": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1039.55
+    },
+    "CNY": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 6.6598
+    },
+    "COP": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 3571.57
+    },
+    "DKK": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 6.8167
+    },
+    "DZD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 137.31
+    },
+    "EGP": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 54.687
+    },
+    "EUR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 0.91175
+    },
+    "GBP": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 0.76278
+    },
+    "GEL": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 2.5874
+    },
+    "GHS": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 11.8116
+    },
+    "HKD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 7.8427
+    },
+    "HUF": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 339.22
+    },
+    "IDR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 18351
+    },
+    "ILS": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 3.3356
+    },
+    "INR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 92.43
+    },
+    "JOD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 0.709
+    },
+    "JPY": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 159.33
+    },
+    "KES": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 130.03
+    },
+    "KRW": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1343.32
+    },
+    "KZT": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 457.95
+    },
+    "LKR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 332.15
+    },
+    "MAD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 10.021
+    },
+    "MMK": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 2097.55
+    },
+    "MXN": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 19.6507
+    },
+    "MYR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 4.1168
+    },
+    "NGN": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1386.23
+    },
+    "NOK": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 9.7863
+    },
+    "NZD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1.8249
+    },
+    "PEN": {
+      "date": "2026-11-26",
+      "unitsPerUsd": 3.4756
+    },
+    "PHP": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 63.715
+    },
+    "PKR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 276.95
+    },
+    "PLN": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 4.0844
+    },
+    "QAR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 3.64
+    },
+    "RON": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 4.8718
+    },
+    "SAR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 3.75
+    },
+    "SEK": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 10.2256
+    },
+    "SGD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1.2903
+    },
+    "THB": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 34.037
+    },
+    "TRY": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 50.687
+    },
+    "TWD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 33.002
+    },
+    "TZS": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 2677.26
+    },
+    "UAH": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 45.12
+    },
+    "USD": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 1
+    },
+    "UZS": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 11976
+    },
+    "VND": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 25848
+    },
+    "XAF": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 598.07
+    },
+    "XOF": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 598.07
+    },
+    "ZAR": {
+      "date": "2026-11-27",
+      "unitsPerUsd": 17.5023
+    }
+  }
+}

@@ -2,3 +2,4 @@
 /dist/
 /node_modules/
 /data/source/*.xlsx
+/src/data/fx.live.json

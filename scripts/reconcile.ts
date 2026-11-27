@@ -9,29 +9,28 @@ import {
   amountSchema,
   countryCodeSchema,
   currencySchema,
-  type Quote,
+  type LocalQuote,
   type Snapshot,
   skuIdSchema,
   textSchema,
 } from "../src/lib/data/schema.ts";
-import { rankTier, type TierId } from "../src/lib/data/tiers.ts";
 import { dataRows, type readWorkbook, validate } from "./workbook.ts";
 
-const topGroups = {
-  "storage-30tb-monthly": "20x / 30 TB 纯存储月付",
-  "ultra-50-monthly": "20x Google AI Ultra 5 折 3 个月",
-  "ultra-monthly": "20x Google AI Ultra 原价月付",
-  "storage-20tb-monthly": "5x / 20 TB 月付",
-  "ai-pro-99-monthly": "Google AI Pro (5 TB) 99% off 3 个月",
-  "ai-pro-67-75-monthly": "Google AI Pro (5 TB) 67% off 3 个月",
-  "ai-pro-monthly": "Google AI Pro (5 TB) 原价月付",
-  "ai-pro-yearly": "Google AI Pro (5 TB) 原价年付",
-  "storage-10tb-monthly": "10 TB 月付",
-  "storage-5tb-monthly": "5 TB 月付",
-  "ai-plus-promo-monthly": "Google AI Plus (400 GB) 首期特价",
-  "ai-plus-monthly": "Google AI Plus (400 GB) 原价月付",
-  workbookOffers: "0 元试用与自动发现新优惠 SKU 实时榜",
-} satisfies Partial<Record<TierId, string>> & { workbookOffers: string };
+const topGroups = [
+  "20x / 30 TB 纯存储月付",
+  "20x Google AI Ultra 5 折 3 个月",
+  "20x Google AI Ultra 原价月付",
+  "5x / 20 TB 月付",
+  "Google AI Pro (5 TB) 99% off 3 个月",
+  "Google AI Pro (5 TB) 67% off 3 个月",
+  "Google AI Pro (5 TB) 原价月付",
+  "Google AI Pro (5 TB) 原价年付",
+  "10 TB 月付",
+  "5 TB 月付",
+  "Google AI Plus (400 GB) 首期特价",
+  "Google AI Plus (400 GB) 原价月付",
+  "0 元试用与自动发现新优惠 SKU 实时榜",
+];
 
 const topRow = z.tuple([
   textSchema.nullable(),
@@ -54,7 +53,6 @@ const matrixRow = z.tuple(
 export function readReferenceViews(
   workbook: Awaited<ReturnType<typeof readWorkbook>>,
 ) {
-  const groupIds = Object.keys(topGroups) as (keyof typeof topGroups)[];
   const top = dataRows(workbook, "overview", (row, location) => {
     const [
       label,
@@ -81,26 +79,24 @@ export function readReferenceViews(
       skuId,
     };
   });
-  if (top.length !== groupIds.length * 5) {
+  if (top.length !== topGroups.length * 5) {
     throw new Error(
-      `总览与Top5低价榜: expected ${groupIds.length} groups of five, found ${top.length} rows`,
+      `总览与Top5低价榜: expected ${topGroups.length} groups of five, found ${top.length} rows`,
     );
   }
-  const groups = groupIds.map((id, index) => {
+  const groups = topGroups.map((label, index) => {
     const rows = top.slice(index * 5, (index + 1) * 5);
     for (const [position, row] of rows.entries()) {
       if (
         row.rank !== position + 1 ||
-        (position === 0
-          ? !row.label?.startsWith(topGroups[id])
-          : row.label !== null)
+        (position === 0 ? !row.label?.startsWith(label) : row.label !== null)
       ) {
         throw new Error(
-          `${row.location}: unexpected group or rank for "${topGroups[id]}"`,
+          `${row.location}: unexpected group or rank for "${label}"`,
         );
       }
     }
-    return { id, rows };
+    return rows;
   });
 
   const matrix = dataRows(workbook, "matrix", (row, location) => {
@@ -134,7 +130,7 @@ export function readReferenceViews(
   return { groups, matrix };
 }
 
-function amounts(quote: Quote) {
+function amounts(quote: LocalQuote) {
   return `${quote.countryCode}/${quote.skuId} ${quote.currency} ${introPrice(quote).local} → ${quote.renewal.local}`;
 }
 
@@ -143,7 +139,6 @@ export function reconcile(
   reference: ReturnType<typeof readReferenceViews>,
 ) {
   const mismatches: string[] = [];
-  const rankDifferences: string[] = [];
   const active = activeQuoteIndex(data);
   const { rows, columns } = buildMatrix(data);
   const matrix = new Map(rows.map((row) => [row.country.code, row]));
@@ -172,17 +167,7 @@ export function reconcile(
   }
 
   let topRows = 0;
-  for (const { id, rows: expectedRows } of reference.groups) {
-    const top =
-      id === "workbookOffers"
-        ? null
-        : rankTier(
-            data,
-            id,
-            expectedRows[0].first !== expectedRows[0].renewal
-              ? "intro"
-              : "renew",
-          ).slice(0, 5);
+  for (const expectedRows of reference.groups) {
     for (const expected of expectedRows) {
       topRows += 1;
       const quote = active.get(`${expected.countryCode}/${expected.skuId}`);
@@ -199,21 +184,7 @@ export function reconcile(
           `${expected.location}: Excel ${source}; raw ${quote ? amounts(quote) : "missing"}`,
         );
       }
-      if (!top) continue;
-      const derived = top[expected.rank - 1]?.quote;
-      if (
-        !derived ||
-        derived.countryCode !== expected.countryCode ||
-        derived.skuId !== expected.skuId ||
-        derived.currency !== expected.currency ||
-        introPrice(derived).local !== expected.first ||
-        derived.renewal.local !== expected.renewal
-      ) {
-        rankDifferences.push(
-          `${id} #${expected.rank}: Excel ${source}; derived ${derived ? amounts(derived) : "missing"}`,
-        );
-      }
     }
   }
-  return { topRows, matrixCells, mismatches, rankDifferences };
+  return { topRows, matrixCells, mismatches };
 }

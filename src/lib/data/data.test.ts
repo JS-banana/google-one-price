@@ -1,14 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { decodeSku } from "../../../scripts/sku.ts";
+import rawFx from "../../data/fx.json" with { type: "json" };
 import rawSnapshot from "../../data/snapshot.json" with { type: "json" };
+import { fxSchema } from "./fx.ts";
 import {
+  cnyPerLocal,
   compareTierLeaders,
   describePrice,
+  getChanges,
   getComparisonMatrix,
   getCountries,
   getCountryAdvantages,
   getCountryQuotes,
   getFreeTrials,
+  getMetadata,
   getSkus,
   getTierDetails,
   getTierRanking,
@@ -29,12 +34,13 @@ import {
   tierIds,
   withoutUsdMarkets,
 } from "./index.ts";
-import { introPrice, toPrice } from "./money.ts";
+import { createPricing, introPrice, toPrice } from "./money.ts";
 import { resolveIntroPeriods } from "./offers.ts";
 import { type Quote, quoteSchema, snapshotSchema } from "./schema.ts";
 import { rankTier } from "./tiers.ts";
 
 const snapshot = snapshotSchema.parse(rawSnapshot);
+const pricing = createPricing(snapshot.skus, fxSchema.parse(rawFx));
 
 describe("snapshot access", () => {
   it("preserves active and historical quotes with their own currencies", () => {
@@ -112,21 +118,22 @@ describe("prices and rankings", () => {
     const alias = "g1.ios.2tb.ai.m.3month_ip_99p";
     const a = row("ARG", gemini, 1.003, 10);
     const b = row("BRA", gemini, 1.002, 20);
-    const data = {
-      ...snapshot,
-      quotes: [
-        a,
-        b,
-        row("BRA", alias, 1.002, 20),
-        row("USA", gemini, 0, 1, "historical"),
-      ],
-    };
+    const quotes = [
+      a,
+      b,
+      row("BRA", alias, 1.002, 20),
+      row("USA", gemini, 0, 1, "historical"),
+    ];
     expect(a.intro?.cny).toBe(b.intro?.cny);
     expect(
-      rankTier(data, "ai-pro-99-monthly", "intro").map(({ quote }) => quote),
+      rankTier(quotes, pricing, "ai-pro-99-monthly", "intro").map(
+        ({ quote }) => quote,
+      ),
     ).toEqual([b, a]);
     expect(
-      rankTier(data, "ai-pro-99-monthly", "renew").map(({ quote }) => quote),
+      rankTier(quotes, pricing, "ai-pro-99-monthly", "renew").map(
+        ({ quote }) => quote,
+      ),
     ).toEqual([a, b]);
     expect(
       getTierRanking("ai-pro-99-monthly").every(
@@ -180,7 +187,7 @@ describe("price views and offers", () => {
         decodeSku(q.skuId).billingPeriod === "P1M",
     );
     if (!monthly?.intro) throw new Error("Missing monthly promotion fixture");
-    const fx = snapshot.metadata.usdToCny;
+    const fx = getMetadata().usdToCny;
     expect(priceFor(monthly, "intro")).toBeCloseTo(
       monthly.intro.local * fx,
       10,
@@ -239,15 +246,19 @@ describe("price views and offers", () => {
   });
 
   it("uses first-year discounted annual prices and counts the qualifying markets", () => {
-    for (const [id, count, expected] of [
-      ["ai-pro-promo-yearly", 60, 71.26],
-      ["ai-plus-promo-yearly", 20, 16.44],
+    for (const [id, count] of [
+      ["ai-pro-promo-yearly", 60],
+      ["ai-plus-promo-yearly", 20],
     ] as const) {
       const rows = getTierRanking(id);
       expect(rows).toHaveLength(count);
       const turkey = rows.find(({ quote }) => quote.countryCode === "TUR");
-      if (!turkey) throw new Error(`Missing Turkish quote for ${id}`);
-      expect(turkey.price).toBeCloseTo(expected, 2);
+      if (!turkey?.quote.intro)
+        throw new Error(`Missing Turkish intro quote for ${id}`);
+      expect(turkey.price).toBeCloseTo(
+        (turkey.quote.intro.local * cnyPerLocal("TRY")) / 12,
+        10,
+      );
       expect(turkey.price).toBe(priceFor(turkey.quote, "intro"));
       expect(describePrice(turkey.quote)).toMatchObject({
         annual: true,
@@ -411,7 +422,7 @@ describe("price views and offers", () => {
     expect(
       quoteLine({ description: "5 TB", skuId: "com.google.gemini.5tb.m" }),
     ).toBe("pro");
-    const groups = groupChanges(snapshot.changes);
+    const groups = groupChanges(getChanges());
     expect(groups).toHaveLength(14);
     expect(groups.reduce((sum, group) => sum + group.summary.count, 0)).toBe(
       100,

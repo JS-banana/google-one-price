@@ -46,11 +46,6 @@ async function main() {
   console.log(
     `Checked ${result.matrixCells} matrix cells and ${result.topRows} Top 5 rows against raw local prices`,
   );
-  if (result.rankDifferences.length > 0) {
-    console.log(
-      `Derived Top 5 differs at ${result.rankDifferences.length} positions:\n${result.rankDifferences.join("\n")}`,
-    );
-  }
   if (result.mismatches.length > 0) {
     throw new Error(
       `${result.mismatches.length} reference mismatches:\n${result.mismatches.join("\n")}`,
