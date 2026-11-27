@@ -37,3 +37,11 @@
 
 - `main` 上的 CI 通过后，GitHub Actions 将 Astro 产物发布到 Cloudflare Workers 静态资源。CI 从已提交的 JSON 快照构建。
 - 使用 `pnpm build` 和 `pnpm cf:dry` 验证部署配置。首次配置、手动部署、缓存和回滚见 [部署说明](docs/deployment.md)。
+
+## 协作流程（首版之后的所有改动）
+
+- `main` 受分支保护：禁止直接推送，只能通过 PR 合并，且 CI 必须通过；只允许 squash 合并。
+- **开发**：从最新 `main` 拉功能分支（建议用独立 worktree），分支名 `feat/…`、`fix/…`、`chore/…`、`docs/…`；本地 `pnpm format && pnpm lint && pnpm check && pnpm test && pnpm build` 全部通过后推送，用 `gh pr create` 按 PR 模板填写。PR 标题使用 Conventional Commits（英文），它会成为 squash 后 `main` 上的提交信息。
+- **审核**：审核者基于 `gh pr diff` 与本地预览独立审核，用 `gh pr review --comment` 给出结论（P0/P1/P2 分级）。开发者在同一分支修复并回复。
+- **验收**：确认 CI 通过、审核意见已处理、实际效果符合预期后 squash 合并；合并即自动部署。涉及产品方向的改动需维护者确认。
+- 数据刷新同样走 PR（`chore(data): refresh snapshot <时间>`），PR 描述附 `pnpm data:check` 的对账结论。
