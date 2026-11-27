@@ -29,8 +29,7 @@ import { viewLabels } from "../lib/price-labels";
       >首期优惠价折合人民币月价，无优惠时取原价。</span
     >
     <span class="view-content" data-price-view="year"
-      >首年月均按优惠期及续费期计算。例如，3 期优惠加 9 期续费，再除以
-      12。</span
+      >把首年实际付款总额除以 12。年付试用结束后按一次整年续费计入。</span
     >
     <span class="view-content" data-price-view="renew"
       >优惠结束后的续费月价，年付按 12 个月折算。</span
@@ -100,15 +99,23 @@ html[data-view="renew"] .view-switch label:has([value="renew"]) {
 }
 @media (max-width: 767px) {
   .view-bar {
-    gap: 4px 8px;
+    display: contents;
   }
   .view-switch {
-    flex: 1 1 100%;
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-block: 4px;
+    background: var(--bg-canvas);
+    border-block: 1px solid var(--border-default);
   }
   .view-tools {
-    flex: 1 1 100%;
+    margin-block: 6px;
+  }
+  .view-explanation {
+    margin-bottom: 8px;
   }
 }
 </style>

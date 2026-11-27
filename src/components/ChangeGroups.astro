@@ -1,6 +1,6 @@
 ---
-import { type Change, type Country, groupChanges, priceFor } from "../lib/data";
-import { formatCny, formatSkuDescription } from "../lib/format";
+import { type Change, type Country, groupChanges } from "../lib/data";
+import { formatSkuDescription } from "../lib/format";
 import { priceDisplay } from "../lib/price-display";
 import CountryLabel from "./CountryLabel.astro";
 import DualPrice from "./DualPrice.astro";
@@ -22,8 +22,9 @@ const groups = groupChanges(changes).slice(0, limit);
     const newSkus = rows.every(({ kind }) => kind === "新发现地区SKU");
     const id = `change-${code.toLowerCase()}`;
     const label = `${newSkus ? "新发现" : "记录"} ${summary.count} ${newSkus ? "个 SKU" : "条变动"}`;
-    const trial =
-      summary.trials > 0 ? `（含 ${summary.trials} 个免费试用）` : "";
+    const trial = summary.trials > 0 && (
+      <span class="change-trials">（含 {summary.trials} 个免费试用）</span>
+    );
     if (limit !== undefined) {
       return (
         <a class="recent-change" href={`/changes#${id}`}>
@@ -45,31 +46,25 @@ const groups = groupChanges(changes).slice(0, limit);
           </span>
         </summary>
         <ul>
-          {rows.map((quote) => (
-            <li class="change-item">
-              <div>
-                <p>{formatSkuDescription(quote.description)}</p>
-                <p class="mono muted small sku-id">{quote.skuId}</p>
-              </div>
-              <div class="change-price">
-                {quote.intro && (
-                  <span class="mono small">
-                    {formatCny(
-                      priceFor(quote, "intro"),
-                      "intro",
-                      quote.intro.local === 0,
-                    )}{" "}
-                    → {formatCny(priceFor(quote, "renew"))}/月
-                  </span>
-                )}
-                <DualPrice
-                  display={priceDisplay(quote)}
-                  price={priceFor(quote, "renew")}
-                  view="renew"
-                />
-              </div>
-            </li>
-          ))}
+          {rows.map((quote) => {
+            const display = priceDisplay(quote);
+            return (
+              <li class="change-item">
+                <div>
+                  <p>{formatSkuDescription(quote.description)}</p>
+                  <p class="mono muted small sku-id">{quote.skuId}</p>
+                </div>
+                <div class="change-price">
+                  <DualPrice
+                    {display}
+                    price={display.prices.renew}
+                    view="renew"
+                    transition={display.offer}
+                  />
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </details>
     );
@@ -101,6 +96,10 @@ summary .country-label {
 }
 .change-count {
   color: var(--text-secondary);
+}
+.change-trials {
+  display: inline-block;
+  white-space: nowrap;
 }
 .change-item {
   display: grid;

@@ -16,15 +16,15 @@ const { refreshedAt, usdToCny } = getMetadata();
       监控抓取，人民币为按实时汇率折算的参考值，实际扣款以 App Store 为准。
     </p>
     <p>
-      数据更新：<time datetime={`${refreshedAt}+08:00`}
+      数据更新
+      <time datetime={`${refreshedAt}+08:00`}
         >{formatShanghaiTime(refreshedAt)}</time
-      >
-      · 汇率基准：<span class="mono">1 USD = {formatRate(usdToCny)} CNY</span> ·
-      共 <span class="mono">{getCountries().length}</span> 个国家/地区、<span
+      >{" · "}汇率基准
+      <span class="mono">1 USD = {formatRate(usdToCny)} CNY</span> · 共
+      <span class="mono">{getCountries().length}</span> 个国家/地区、<span
         class="mono"
         >{formatLocalNumber(getQuoteCount())}</span
-      >
-      条报价
+      >{" "}条报价
     </p>
   </div>
 </footer>

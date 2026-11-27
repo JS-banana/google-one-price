@@ -43,21 +43,23 @@ const description = `截至 ${formatShanghaiTime(time)}，记录 ${summary.count
       <dd class="mono">{summary.trials} / {summary.offers}</dd>
     </div>
   </dl>
-  <fieldset class="pills change-filters" aria-label="变动类型">
-    {filters.map((kind, index) => (
-      <label class="control">
-        <input
-          class="sr-only"
-          type="radio"
-          name="change-kind"
-          data-change-kind
-          value={kind}
-          checked={index === 0}
-        />
-        {kind === "新发现地区SKU" ? "新发现地区 SKU" : kind}
-      </label>
-    ))}
-  </fieldset>
+  {kinds.length > 1 && (
+    <fieldset class="pills change-filters" aria-label="变动类型">
+      {filters.map((kind, index) => (
+        <label class="control">
+          <input
+            class="sr-only"
+            type="radio"
+            name="change-kind"
+            data-change-kind
+            value={kind}
+            checked={index === 0}
+          />
+          {kind === "新发现地区SKU" ? "新发现地区 SKU" : kind}
+        </label>
+      ))}
+    </fieldset>
+  )}
   {filters.map((kind, index) => (
     <div data-kind-panel={kind} hidden={index !== 0}>
       <ChangeGroups
@@ -96,6 +98,9 @@ const description = `截至 ${formatShanghaiTime(time)}，记录 ${summary.count
 }
 .change-filters {
   margin-block: 12px 8px;
+}
+.change-summary + [data-kind-panel] {
+  margin-top: 12px;
 }
 .change-filters .control:has(:focus-visible) {
   outline: 2px solid var(--text-primary);

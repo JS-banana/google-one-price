@@ -6,6 +6,7 @@ import {
   getCountries,
   getCountryAdvantages,
   getTierRanking,
+  isUsdMarket,
   regions,
 } from "../../lib/data";
 import { formatCny } from "../../lib/format";
@@ -22,7 +23,7 @@ const countryName = countries.find(
   ({ code }) => code === pro.quote.countryCode,
 )?.nameZh;
 const title = "国家/地区";
-const description = `浏览 ${countries.length} 个国家/地区的 Google One 与 Gemini iOS 报价。AI Pro 原价月付当前最低为${countryName} ${formatCny(pro.price)}，可按地区或货币查找。`;
+const description = `浏览 ${countries.length} 个国家/地区的 Google One 与 Gemini iOS 报价。AI Pro 原价月付当前最低为 ${countryName} ${formatCny(pro.price)}/月，可按地区或货币查找。`;
 ---
 
 <Layout {title} {description}>
@@ -58,7 +59,12 @@ const description = `浏览 ${countries.length} 个国家/地区的 Google One �
                       eager={index === 0}
                     />
                     <span class="locale-codes mono small muted">
-                      {code} · {currency}
+                      {code} ·{" "}
+                      <span
+                        class:list={{ "currency-badge": isUsdMarket(country) }}
+                      >
+                        {currency}
+                      </span>
                     </span>
                     {firsts > 0 && (
                       <span class="badge best small">
@@ -128,8 +134,9 @@ const description = `浏览 ${countries.length} 个国家/地区的 Google One �
   .locale-codes {
     margin-inline-start: 24px;
   }
-  .country-grid .country-label {
+  .country-grid :global(.country-label) {
     flex-basis: 100%;
+    white-space: nowrap;
   }
 }
 </style>
