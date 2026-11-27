@@ -8,6 +8,10 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    ignore:
+      # Upgrade @types/node to a new major when upgrading the Node.js runtime.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       astro:
         patterns: ["astro", "@astrojs/*"]
