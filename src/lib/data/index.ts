@@ -24,6 +24,12 @@ import {
 import { type PriceView, priceViews } from "./views.ts";
 
 export { groupChanges, summarizeChanges } from "./changes.ts";
+export {
+  type CountryMeta,
+  derivePaymentAccess,
+  getCountryMeta,
+  type PaymentAccess,
+} from "./country-meta.ts";
 export type { Matrix, MatrixSkuId } from "./matrix.ts";
 export {
   hasHistoricalPriceAnomaly,
@@ -32,6 +38,11 @@ export {
   renewalMultiplier,
   renewalTrap,
 } from "./offers.ts";
+export {
+  getGoogleFamilyGroup,
+  getProducts,
+  type ProductFacts,
+} from "./products.ts";
 export type {
   Change,
   Country,

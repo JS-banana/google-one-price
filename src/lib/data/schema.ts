@@ -7,6 +7,10 @@ export const textSchema = z.string().trim().min(1);
 export const amountSchema = z.number().nonnegative();
 export const rateSchema = z.number().positive();
 export const dateTimeSchema = z.iso.datetime({ local: true });
+export const reviewSchema = z.object({
+  sources: z.array(z.url({ protocol: /^https$/ })).min(1),
+  reviewedAt: z.iso.date(),
+});
 
 export const sourceSchema = z.union([
   z.enum(["applecommerce_v26", "apple_catalog"]),
