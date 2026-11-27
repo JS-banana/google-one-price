@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@astrojs/react": "7.1.9",
+    "@astrojs/sitemap": "3.7.6",
     "astro": "7.4.13",
     "decimal.js": "10.6.0",
     "oxc-transform-react": "0.156.0",
