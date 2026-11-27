@@ -37,13 +37,11 @@ export {
   getCountryMeta,
   type PaymentAccess,
 } from "./country-meta.ts";
+export { groupCountryQuotes } from "./country-quotes.ts";
 export type { Matrix, MatrixSkuId } from "./matrix.ts";
 export {
   hasHistoricalPriceAnomaly,
-  homeCardNotice,
   isUsdMarket,
-  renewalMultiplier,
-  renewalTrap,
 } from "./offers.ts";
 export {
   getGoogleFamilyGroup,
@@ -59,7 +57,6 @@ export type {
 } from "./schema.ts";
 export { regions } from "./schema.ts";
 export {
-  compareTierLeaders,
   productLines,
   quoteLine,
   quoteTier,
@@ -155,15 +152,6 @@ export function getComparisonMatrix() {
       column.map((ranking) => ranking.get(country.code) ?? null),
     ),
   }));
-}
-
-export function getCountryAdvantages(countryCode: string) {
-  return tierIds.flatMap((id) => {
-    const match = getTierRanking(id, "year")
-      .slice(0, 3)
-      .find(({ quote }) => quote.countryCode === countryCode);
-    return match ? [{ id, ...match }] : [];
-  });
 }
 
 export function isGlobalTierLowest(

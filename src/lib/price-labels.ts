@@ -1,5 +1,5 @@
 import type { PriceTerms } from "./data/money";
-import { renewalTrap } from "./data/offers";
+import { renewalTrap } from "./data/renewal";
 import type { PriceView } from "./data/views";
 import {
   formatCny,
@@ -19,10 +19,7 @@ type Amounts = { currency: string; intro: number | null; renewal: number };
 
 function offerBadge(amounts: Amounts, terms: PriceTerms) {
   const { intro, renewal } = amounts;
-  const trap = renewalTrap({
-    intro: intro === null ? null : { local: intro },
-    renewal: { local: renewal },
-  });
+  const trap = renewalTrap(intro, renewal);
   return trap
     ? {
         level: trap.level,

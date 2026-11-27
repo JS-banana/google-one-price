@@ -1,4 +1,5 @@
 import type { PaymentAccess } from "./country-meta.ts";
+import { decimalParts } from "./decimal.ts";
 
 export const decisionNeeds = {
   plus: "AI Plus",
@@ -122,23 +123,12 @@ export function readDecisionParams(
   };
 }
 
-export function sharingSupported(
-  data: DecisionData,
-  { need, cap }: DecisionParams,
-) {
+function sharingStatus(data: DecisionData, { need, cap }: DecisionParams) {
   const [supported, excluded] = data.family[need];
   const capacityGb = Number.parseInt(cap, 10) * (cap.endsWith("tb") ? 1000 : 1);
-  return (
-    supported === true && (need !== "storage" || !excluded.includes(capacityGb))
-  );
-}
-
-// The snapshot carries up to 15 significant digits. Keep base-10 amounts
-// exact through the local sum, then convert once before returning a number.
-function decimalParts(value: number) {
-  const [mantissa, power = "0"] = value.toString().split("e");
-  const [integer, fraction = ""] = mantissa.split(".");
-  return [BigInt(integer + fraction), Number(power) - fraction.length] as const;
+  return need === "storage" && excluded.includes(capacityGb)
+    ? false
+    : supported;
 }
 
 export function calculateCost(
@@ -202,8 +192,6 @@ export function calculateCost(
     bills,
     shortAnnual: months === 12 && duration === 3,
     introMonths: trialMonths || (intro === null ? 0 : periods * months),
-    multiplier:
-      intro === 0 ? Infinity : intro === null ? null : renewal / intro,
   };
 }
 
@@ -229,7 +217,7 @@ export const compareFirst = (a: DecisionPlan, b: DecisionPlan) =>
   a.first - b.first ||
   b.offer[6] - a.offer[6] ||
   a.total - b.total ||
-  a.renewalCny - b.renewalCny ||
+  a.renewalCny / a.months - b.renewalCny / b.months ||
   compareRegions(a, b) ||
   comparePlans(a, b);
 
@@ -245,7 +233,7 @@ export function lowDifference(
 
 export function decide(data: DecisionData, params: DecisionParams) {
   const { need, cap, m, n, base, easy, elig } = params;
-  const sharing = sharingSupported(data, params);
+  const sharing = sharingStatus(data, params);
   const people = sharing ? n : 1;
   const candidates = data.offers[need === "storage" ? cap : need] ?? [];
   const regular = new Map<string, DecisionPlan>();

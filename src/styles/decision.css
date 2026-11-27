@@ -81,7 +81,8 @@
   min-width: 0;
   border-top: 2px solid var(--border-strong);
 }
-.decision-best {
+.decision-best,
+.decision-steady {
   border-top-color: var(--best);
 }
 .decision-first {
@@ -153,6 +154,15 @@
 .decision-warn {
   color: var(--warn);
 }
+.decision-caution {
+  color: var(--caution-ink);
+}
+.decision-renewal-short {
+  display: none;
+}
+.steady-gap {
+  font-weight: 600;
+}
 .decision-timeline {
   margin-top: 2px;
   padding: 8px;
@@ -217,6 +227,14 @@
   display: block;
   font-size: 11px;
 }
+.decision-offer-mark {
+  margin-inline-start: 0.2em;
+  color: var(--caution-ink);
+  font-weight: 700;
+}
+.decision-offer-note {
+  margin-top: 6px;
+}
 .decision-rank td:nth-last-child(1),
 .decision-rank .decision-rank-renew {
   white-space: nowrap;
@@ -264,17 +282,29 @@
     line-height: 26px;
   }
   .compact-card {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
-    justify-content: flex-start;
-    gap: 6px;
+    gap: 8px;
     width: 100%;
     min-height: 40px;
     padding: 6px 10px;
     text-align: left;
   }
-  .compact-card .mono {
-    margin-left: auto;
+  .compact-market,
+  .compact-amount {
+    display: grid;
+    gap: 2px;
+  }
+  .compact-market {
+    justify-items: start;
+  }
+  .compact-amount {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .compact-gap {
+    color: var(--text-secondary);
   }
   .compact-card + .decision-card-body {
     display: none;
@@ -299,11 +329,8 @@
   }
   .decision-rank tbody tr {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) minmax(0, max-content) minmax(
-        0,
-        max-content
-      ) auto;
-    grid-template-areas: "rank market market total total" "plan plan renew delta profile";
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "rank market delta total" "plan plan renew profile";
     align-items: baseline;
     gap: 2px 6px;
     border-bottom: 1px solid var(--border-default);
@@ -329,17 +356,21 @@
   }
   .decision-rank-plan {
     grid-area: plan;
-    overflow-wrap: anywhere;
     font-size: 12px;
+  }
+  .decision-rank-plan-name {
+    white-space: nowrap;
   }
   .decision-rank-renew {
     grid-area: renew;
     text-align: left;
     font-size: 11px;
   }
-  .decision-rank
-    :is(.decision-jump, .decision-percent, .decision-renewal-prefix) {
+  .decision-rank :is(.decision-percent, .decision-renewal-full) {
     display: none;
+  }
+  .decision-rank .decision-renewal-short {
+    display: inline;
   }
   .decision-rank-gap {
     grid-area: delta;

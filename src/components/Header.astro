@@ -78,7 +78,8 @@ const banner = document.getElementById("stale-prices");
 if (time && banner) {
   const refresh = () => {
     const { days, state } = priceFreshness(time.dateTime);
-    time.textContent = `${days} 天前`;
+    time.textContent =
+      days === 0 ? "今天" : days === 1 ? "昨天" : `${days} 天前`;
     banner.hidden = state !== "stale";
   };
   refresh();

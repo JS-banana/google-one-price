@@ -62,14 +62,12 @@ describe("cash paid within the selected term", () => {
       [4, 2, 12],
     ]);
     expect(trial.first).toBe(0);
-    expect(trial.multiplier).toBe(Infinity);
     expect(trial.perPerson).toBe(80);
     expect(trial.perPersonMonthly).toBeCloseTo(80 / 24);
     const intro = calculateCost(offer(12, 80, 1, 0, 120), 3, 1, rate, 1);
     expect(intro.bills).toHaveLength(1);
     expect(intro.introMonths).toBe(12);
     expect(intro.shortAnnual).toBe(true);
-    expect(intro.multiplier).toBe(1.5);
     expect(
       calculateCost(offer(1, 0.01, 3, 0, 0.02), 12, 1, ["X", 3, ""], 2).total,
     ).toBe(0.14);
@@ -193,7 +191,12 @@ describe("candidate policy and ranking", () => {
   });
 
   it("breaks zero-first-payment ties by trial, total, renewal, then market", () => {
-    const trial = { ...plan, offer: offer(1, 0, 0, 2, 10), first: 0 };
+    const trial = {
+      ...plan,
+      offer: offer(1, 0, 0, 2, 10),
+      months: 1 as const,
+      first: 0,
+    };
     expect(compareFirst(trial, { ...trial, first: 1, total: 0 })).toBeLessThan(
       0,
     );
@@ -206,6 +209,14 @@ describe("candidate policy and ranking", () => {
     expect(
       compareFirst(trial, { ...trial, renewalCny: trial.renewalCny + 1 }),
     ).toBeLessThan(0);
+    expect(
+      compareFirst(trial, {
+        ...trial,
+        offer: offer(12, 0, 0, 2, 110),
+        months: 12,
+        renewalCny: trial.renewalCny * 11,
+      }),
+    ).toBeGreaterThan(0);
     expect(
       compareFirst(trial, {
         ...trial,
@@ -338,8 +349,9 @@ describe("candidate policy and ranking", () => {
 describe("price observation freshness", () => {
   it.each([
     [0, "fresh", 0],
+    [0.5, "fresh", 1],
     [7, "fresh", 7],
-    [7.5, "aging", 7],
+    [7.5, "aging", 8],
     [30, "aging", 30],
     [31, "stale", 31],
     [-1, "fresh", 0],

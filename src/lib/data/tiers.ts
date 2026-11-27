@@ -282,10 +282,3 @@ export function quoteTier(quote: Pick<Quote, "skuId" | "intro" | "status">) {
   const { requiresIntro = false }: TierDefinition = tiers[id];
   if (requiresIntro === (quote.intro !== null)) return id;
 }
-
-export function compareTierLeaders(a: RankedQuote, b: RankedQuote) {
-  return (
-    a.price - b.price ||
-    Number(a.quote.intro !== null) - Number(b.quote.intro !== null)
-  );
-}

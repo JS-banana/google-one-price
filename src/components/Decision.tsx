@@ -10,6 +10,7 @@ import {
   readDecisionParams,
 } from "../lib/data/decision";
 import { priceFreshness } from "../lib/data/freshness";
+import { renewalTrap } from "../lib/data/renewal";
 import {
   accessLabels,
   capacityLabel,
@@ -39,6 +40,13 @@ const annualNote = "需一次付 12 个月";
 const monthOptions = [3, 12, 24] as const;
 const peopleOptions = [1, 2, 3, 4, 5, 6];
 const eligibility = { new: "首次订阅", existing: "订阅过" } as const;
+const restrictedOffer = "特定入口/拉新优惠，可能并非人人可见";
+
+function sharingNote(sharing: boolean | null) {
+  return sharing === false
+    ? "所选套餐不支持家庭共享"
+    : "所选套餐的家庭共享资格未确认";
+}
 
 function decisionUrl(params: DecisionParams, url = new URL(location.href)) {
   for (const key of decisionKeys)
@@ -163,23 +171,19 @@ function Renewal({
   plan,
   data,
   extras,
-  emphasized = false,
-}: Props & { plan: DecisionPlan; emphasized?: boolean }) {
-  const label = plan.offer[6]
-    ? "试用后"
-    : plan.offer[4] !== null
-      ? "优惠后"
-      : "";
-  const multiplier = plan.multiplier;
+  compact = false,
+}: Props & { plan: DecisionPlan; compact?: boolean }) {
+  const intro = plan.offer[4];
+  const trap = renewalTrap(intro, plan.renewal);
+  const label = plan.offer[6] ? "试用后" : intro !== null ? "优惠后" : "";
   return (
-    <span
-      class={
-        emphasized || (multiplier !== null && multiplier > 1)
-          ? "decision-warn"
-          : "secondary"
-      }
-    >
-      <span class="decision-renewal-prefix">{label}续费 </span>
+    <span class={trap ? `decision-${trap.level}` : "secondary"}>
+      <span class="decision-renewal-full">{label}续费 </span>
+      {compact && (
+        <span class="decision-renewal-short">
+          {plan.offer[6] ? "试用后续 " : "续 "}
+        </span>
+      )}
       <Price
         plan={plan}
         local={plan.renewal}
@@ -188,13 +192,7 @@ function Renewal({
         fxDate={extras.fxDate}
       />
       /{plan.months === 12 ? "年" : "月"}
-      {multiplier !== null && multiplier > 1 && (
-        <span class="decision-jump">
-          {multiplier === Infinity
-            ? "（从免费恢复原价）"
-            : `（${formatMultiplier(multiplier)}）`}
-        </span>
-      )}
+      {trap?.kind === "multiplier" && ` ${formatMultiplier(trap.multiplier)}`}
     </span>
   );
 }
@@ -275,6 +273,8 @@ function Card({
   const value = plan.perPersonMonthly ?? plan.monthly;
   const regular = result.regular.get(plan.market.code);
   const gap = plan.total - (result.cheapest?.total ?? plan.total);
+  const split = result.people > 1;
+  const steadyGap = formatCny(split ? gap / result.people / params.m : gap);
   const [payment, source] = extras.payment[plan.market.code];
   const totalLabel = `${params.m} 个月共`;
   return (
@@ -290,11 +290,23 @@ function Card({
           onClick={() => setOpen(!open)}
         >
           <strong>{title}</strong>
-          <Market market={plan.market} eager />
-          <span class="mono">
-            {kind === "first"
-              ? `今天 ${formatCny(plan.first)}`
-              : `${plan.perPersonMonthly !== null ? "人均 " : ""}${formatCny(value)}/月`}
+          <span class="compact-market">
+            <Market market={plan.market} eager />
+            {kind === "steady" && <Payment market={plan.market} />}
+          </span>
+          <span class="compact-amount">
+            <span class="mono">
+              {kind === "first"
+                ? `今天 ${formatCny(plan.first)}`
+                : `${plan.perPersonMonthly !== null ? "人均 " : ""}${formatCny(value)}/月`}
+            </span>
+            {kind === "steady" && (
+              <span class="small compact-gap">
+                {gap
+                  ? `${split ? "人均每月多" : "多"} ${steadyGap}${split ? "" : ` / ${params.m} 个月`}`
+                  : "和最省方案同价"}
+              </span>
+            )}
           </span>
           <span aria-hidden="true">{open ? "−" : "+"}</span>
         </button>
@@ -380,8 +392,8 @@ function Card({
           </p>
         )}
         {kind === "steady" && result.cheapest && (
-          <p class="small secondary">
-            较最省方案{result.people > 1 ? "人均每月" : ` ${params.m} 个月`}
+          <p class="small steady-gap">
+            较最省方案{split ? "人均每月" : ` ${params.m} 个月`}
             {gap ? (
               <>
                 多{" "}
@@ -397,9 +409,7 @@ function Card({
                     extras.fxDate,
                   )}
                 >
-                  {formatCny(
-                    result.people > 1 ? gap / result.people / params.m : gap,
-                  )}
+                  {steadyGap}
                 </button>
               </>
             ) : (
@@ -416,12 +426,7 @@ function Card({
           </p>
         )}
         <p class="card-renewal">
-          <Renewal
-            plan={plan}
-            data={data}
-            extras={extras}
-            emphasized={kind === "first"}
-          />
+          <Renewal plan={plan} data={data} extras={extras} />
         </p>
         {kind === "first" && gap > 0 && plan.offer[4] !== null && (
           <p class="decision-warn small">仅适合在优惠期内取消。</p>
@@ -429,7 +434,7 @@ function Card({
         <Timeline plan={plan} params={params} data={data} extras={extras} />
         {plan.offer[8] !== 0 && (
           <div class="decision-fallback small">
-            <p>特定入口/拉新优惠，可能并非人人可见。</p>
+            <p>{restrictedOffer}。</p>
             {regular ? (
               <p>
                 常规兜底 · {planLabel(regular)} · {params.m} 个月{" "}
@@ -460,7 +465,7 @@ function Card({
             <li>
               {result.sharing
                 ? extras.familyHints[params.need]
-                : "所选套餐无法确认可供家庭分摊。"}{" "}
+                : `${sharingNote(result.sharing)}。`}{" "}
               <a href="/guide/family-sharing">家庭共享规则</a>
             </li>
             <li>
@@ -537,10 +542,11 @@ export default function Decision({
   const observedDate = extras.observedAt.slice(0, 10);
   const bestTitle =
     freshness?.state === "stale" ? `按 ${observedDate} 价格最省` : "最省";
+  const steadyTitle = result.cheapestIsEasy ? "稳妥备选" : "稳妥";
   const focusedRank = ranked.findIndex(({ market }) => market.code === focus);
 
-  function save(values: DecisionParams) {
-    const url = decisionUrl(values);
+  function save(values: DecisionParams, url = new URL(location.href)) {
+    decisionUrl(values, url);
     if (url.href !== location.href)
       history.replaceState(history.state, "", url);
     try {
@@ -601,19 +607,29 @@ export default function Decision({
     value: DecisionParams[K],
   ) {
     const values = { ...params, [key]: value };
+    const url = new URL(location.href);
+    url.searchParams.delete("focus");
     setParams(values);
+    setFocus("");
     setStatus("");
-    save(values);
+    save(values, url);
   }
 
   async function share(summary: boolean) {
     const url = decisionUrl(params, new URL("/", location.origin)).href;
     const format = (plan: DecisionPlan) =>
-      `${plan.market.name} · ${planLabel(plan)} · ${params.m} 个月共 ${formatCny(plan.total)}`;
+      `${plan.market.name} · ${planLabel(plan)} · ${params.m} 个月共 ${formatCny(plan.total)}` +
+      (plan.perPersonMonthly === null
+        ? ""
+        : ` · 人均 ${formatCny(plan.perPersonMonthly)}/月`);
     const text = [
       `${decisionProduct(params.need, params.cap)} · ${params.m} 个月 · ${params.n} 人 · ${eligibility[params.elig]}`,
-      cheapest && `${bestTitle}：${format(cheapest)}`,
-      steady && `稳妥（礼品卡可用）：${format(steady)}`,
+      params.n > 1 &&
+        !result.sharing &&
+        `${sharingNote(result.sharing)}，按 1 人计算。`,
+      cheapest &&
+        `${bestTitle}${result.cheapestIsEasy ? "（礼品卡可用）" : ""}：${format(cheapest)}`,
+      steady && `${steadyTitle}（礼品卡可用）：${format(steady)}`,
       `价格观测：${observedDate}`,
       url,
     ]
@@ -731,11 +747,7 @@ export default function Decision({
         )}
         {params.n > 1 && !result.sharing && (
           <p class="decision-aging">
-            所选套餐
-            {params.need === "storage" && params.cap === "30gb"
-              ? "不支持家庭共享"
-              : "的家庭共享资格未确认"}
-            ，按 1 人计算。
+            {sharingNote(result.sharing)}，按 1 人计算。
           </p>
         )}
         {!cheapest ? (
@@ -774,7 +786,7 @@ export default function Decision({
               {steady && (
                 <Card
                   kind="steady"
-                  title="稳妥"
+                  title={steadyTitle}
                   plan={steady}
                   result={result}
                   params={params}
@@ -851,18 +863,21 @@ export default function Decision({
                         <Payment market={plan.market} />
                       </th>
                       <td class="decision-rank-plan">
-                        {planLabel(plan)}
+                        <span class="decision-rank-plan-name">
+                          {planLabel(plan)}
+                          {plan.offer[8] !== 0 && (
+                            <sup
+                              class="decision-offer-mark"
+                              role="img"
+                              title={restrictedOffer}
+                              aria-label={restrictedOffer}
+                            >
+                              *
+                            </sup>
+                          )}
+                        </span>
                         {plan.shortAnnual && (
                           <small class="secondary">{annualNote}</small>
-                        )}
-                        {plan.offer[8] !== 0 && (
-                          <small
-                            class="secondary"
-                            title="特定入口/拉新优惠，可能并非人人可见"
-                          >
-                            {" "}
-                            · 特定入口
-                          </small>
                         )}
                       </td>
                       <td class="num decision-rank-total">
@@ -896,7 +911,12 @@ export default function Decision({
                         </td>
                       )}
                       <td class="num decision-rank-renew">
-                        <Renewal plan={plan} data={data} extras={extras} />
+                        <Renewal
+                          plan={plan}
+                          data={data}
+                          extras={extras}
+                          compact
+                        />
                       </td>
                       <td class="decision-rank-link">
                         <a
@@ -911,6 +931,11 @@ export default function Decision({
               </tbody>
             </table>
           </div>
+          {ranked.some(({ offer }) => offer[8] !== 0) && (
+            <p class="decision-offer-note small secondary">
+              <span class="decision-offer-mark">*</span> {restrictedOffer}。
+            </p>
+          )}
           {ranked.length > 10 && focusedRank < 10 && (
             <button
               class="control decision-more"
