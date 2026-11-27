@@ -1,16 +1,14 @@
-import readExcelFile, { type Row, type SheetData } from "read-excel-file/node";
+import { type Row, readSheet, type SheetData } from "read-excel-file/node";
 import { z } from "zod";
+import { fxCurrencySchema } from "../src/lib/data/fx.ts";
 import { matrixColumns } from "../src/lib/data/matrix.ts";
-import { encodedOfferMonths, toPrice } from "../src/lib/data/money.ts";
+import { encodedOfferMonths } from "../src/lib/data/money.ts";
 import { resolveIntroPeriods } from "../src/lib/data/offers.ts";
 import {
   amountSchema,
   type Country,
   countryCodeSchema,
-  currencySchema,
   dateTimeSchema,
-  type ExchangeRate,
-  rateSchema,
   type Snapshot,
   skuIdSchema,
   snapshotSchema,
@@ -81,17 +79,6 @@ const layout = {
       "续费折合(CNY)",
     ],
   },
-  rates: {
-    name: "实时汇率",
-    headerRow: 5,
-    headers: [
-      "币种代码",
-      "币种中文名",
-      "1 USD 兑该币种",
-      "1 单位折合 CNY",
-      "1 CNY 兑该币种",
-    ],
-  },
 } satisfies Record<
   string,
   { name: string; headerRow: number; headers: string[] }
@@ -116,12 +103,10 @@ export function canonicalNumber(value: string | number): number {
 }
 
 export async function readWorkbook(path: string): Promise<Workbook> {
-  const sheets = await readExcelFile(path, { parseNumber: canonicalNumber });
-  const find = (key: SheetKey) => {
+  const read = async (key: SheetKey) => {
     const { name, headerRow, headers } = layout[key];
-    const sheet = sheets.find(({ sheet }) => sheet === name);
-    if (!sheet) throw new Error(`Missing worksheet "${name}"`);
-    const actual = sheet.data[headerRow - 1] ?? [];
+    const rows = await readSheet(path, name, { parseNumber: canonicalNumber });
+    const actual = rows[headerRow - 1] ?? [];
     if (actual.length !== headers.length) {
       throw new Error(
         `${name}!row ${headerRow}: expected ${headers.length} columns, found ${actual.length}`,
@@ -134,26 +119,20 @@ export async function readWorkbook(path: string): Promise<Workbook> {
         `${name}!row ${headerRow}, column ${index + 1}`,
       );
     }
-    return sheet.data;
+    return rows;
   };
-  if (sheets.length !== Object.keys(layout).length) {
-    throw new Error(
-      `Expected five worksheets, found ${sheets.length}: ${sheets.map(({ sheet }) => sheet).join(", ")}`,
-    );
-  }
-  const overview = find("overview");
+  const [overview, matrix, quotes, changes] = await Promise.all([
+    read("overview"),
+    read("matrix"),
+    read("quotes"),
+    read("changes"),
+  ]);
   validate(
     textSchema.regex(/^一、\s*各档位当前全球最低 Top 5/),
     overview[3][0],
     `${layout.overview.name}!A4`,
   );
-  return {
-    overview,
-    matrix: find("matrix"),
-    quotes: find("quotes"),
-    changes: find("changes"),
-    rates: find("rates"),
-  };
+  return { overview, matrix, quotes, changes };
 }
 
 export function dataRows<T>(
@@ -173,19 +152,12 @@ const quoteRow = z.tuple([
   textSchema,
   skuIdSchema,
   textSchema,
-  currencySchema,
+  fxCurrencySchema,
   amountSchema.nullable(),
   z.unknown(),
   amountSchema,
   z.unknown(),
   textSchema.regex(sourceLabel),
-]);
-const rateRow = z.tuple([
-  currencySchema,
-  textSchema,
-  rateSchema,
-  z.unknown(),
-  z.unknown(),
 ]);
 const changeRow = z.tuple([
   textSchema,
@@ -193,9 +165,9 @@ const changeRow = z.tuple([
   textSchema,
   skuIdSchema,
   textSchema,
-  amountSchema.nullable(),
+  z.unknown(),
   textSchema,
-  amountSchema,
+  z.unknown(),
 ]);
 
 const localTimestamp = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
@@ -214,60 +186,17 @@ function readTimestamp(
 }
 
 export function normalizeWorkbook(workbook: Workbook): Snapshot {
-  const fxLocation = `${layout.rates.name}!A2`;
-  const fxHeader = validate(textSchema, workbook.rates[1][0], fxLocation);
-  const fx = /\| 汇率源: ([^ ]+) \((.+ (?:[+-]\d{4}|GMT|UTC))\)$/.exec(
-    fxHeader,
-  );
-  const fxTime = fx ? new Date(fx[2]) : null;
-  if (!fx || !fxTime || Number.isNaN(fxTime.getTime())) {
-    throw new Error(
-      `${fxLocation}: missing exchange-rate provider or publication timestamp`,
-    );
-  }
-  const [, , usdToCny] = validate(
-    z.tuple([
-      z.literal("USD 对人民币 (USD/CNY)"),
-      z.literal("CNY"),
-      rateSchema,
-      z.unknown(),
-      z.unknown(),
-    ]),
-    workbook.rates[2],
-    `${layout.rates.name}!row 3`,
-  );
   const metadata = {
-    refreshedAt: readTimestamp(fxHeader, "更新时间", fxLocation),
+    pricesObservedAt: readTimestamp(
+      workbook.overview[1][0],
+      "最后刷新",
+      `${layout.overview.name}!A2`,
+    ),
     changesCheckedAt: readTimestamp(
       workbook.changes[1][0],
       "最近一次检查",
       `${layout.changes.name}!A2`,
     ),
-    usdToCny,
-    fxProvider: fx[1],
-    fxPublishedAt: fxTime.toISOString(),
-  };
-  const rates = new Map<string, ExchangeRate>();
-  dataRows(workbook, "rates", (row, location) => {
-    const [currency, nameZh, unitsPerUsd] = validate(rateRow, row, location);
-    if (rates.has(currency))
-      throw new Error(`${location}: duplicate exchange rate for ${currency}`);
-    rates.set(currency, { currency, nameZh, unitsPerUsd });
-  });
-  if (
-    rates.get("USD")?.unitsPerUsd !== 1 ||
-    rates.get("CNY")?.unitsPerUsd !== usdToCny
-  ) {
-    throw new Error(
-      `${layout.rates.name}: USD must be 1 and the CNY row must match C3`,
-    );
-  }
-
-  const price = (value: number, currency: string, location: string) => {
-    const rate = rates.get(currency);
-    if (!rate)
-      throw new Error(`${location}: missing exchange rate for ${currency}`);
-    return toPrice(value, rate.unitsPerUsd, usdToCny);
   };
   const names = new Map<string, string>();
   const countries = new Map<string, Country>();
@@ -342,9 +271,9 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
       currency,
       source,
       status,
-      intro: intro === null ? null : price(intro, currency, location),
+      intro: intro === null ? null : { local: intro },
       introPeriods,
-      renewal: price(renewal, currency, location),
+      renewal: { local: renewal },
     };
   });
   const summary = validate(
@@ -363,16 +292,8 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
   }
 
   const changes = dataRows(workbook, "changes", (row, location) => {
-    const [
-      kind,
-      market,
-      description,
-      skuId,
-      introText,
-      reportedIntroCny,
-      renewalText,
-      reportedRenewalCny,
-    ] = validate(changeRow, row, location);
+    const [kind, market, description, skuId, introText, , renewalText] =
+      validate(changeRow, row, location);
     const countryCode = market.slice(-4, -1);
     const country = countries.get(countryCode);
     if (!country || market.slice(0, -6) !== country.nameZh) {
@@ -386,8 +307,7 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
       /^(\d+(?:\.\d+)?) ([A-Z]{3}) ×(\d+)期$/.exec(introText) ?? [];
     if (
       !currency ||
-      (introText !== "-" && (introCurrency !== currency || !periods)) ||
-      (localIntro === undefined) !== (reportedIntroCny === null)
+      (introText !== "-" && (introCurrency !== currency || !periods))
     ) {
       throw new Error(
         `${location}: invalid or conflicting change prices: ${introText} / ${renewalText}`,
@@ -403,12 +323,10 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
       countryCode,
       skuId,
       description,
-      currency,
-      intro: intro === null ? null : price(intro, currency, location),
-      renewal: price(canonicalNumber(localRenewal), currency, location),
+      currency: validate(fxCurrencySchema, currency, location),
+      intro: intro === null ? null : { local: intro },
+      renewal: { local: canonicalNumber(localRenewal) },
       introPeriods: periods === undefined ? null : Number(periods),
-      reportedIntroCny,
-      reportedRenewalCny,
     };
   });
   const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
@@ -431,9 +349,6 @@ export function normalizeWorkbook(workbook: Workbook): Snapshot {
           compare(a.countryCode, b.countryCode) ||
           compare(a.skuId, b.skuId) ||
           compare(JSON.stringify(a), JSON.stringify(b)),
-      ),
-      exchangeRates: [...rates.values()].sort((a, b) =>
-        compare(a.currency, b.currency),
       ),
     },
     "Normalized snapshot",

@@ -1,13 +1,22 @@
 import { Decimal } from "decimal.js";
-import type { Change, Price, Quote, Sku, Snapshot } from "./schema.ts";
+import type { Fx } from "./fx.ts";
+import type { LocalChange, LocalQuote, Price, Sku, WithCny } from "./schema.ts";
 import type { PriceView } from "./views.ts";
 
 const MoneyDecimal = Decimal.clone({ precision: 40 });
 
 export type PricedQuote = Pick<
-  Quote | Change,
+  LocalQuote | LocalChange,
   "skuId" | "currency" | "description" | "intro" | "introPeriods" | "renewal"
 >;
+
+function convertToCny(
+  amount: Decimal.Value,
+  unitsPerUsd: number,
+  usdToCny: number,
+) {
+  return new MoneyDecimal(amount).times(usdToCny).div(unitsPerUsd);
+}
 
 export function toPrice(
   local: number,
@@ -16,9 +25,7 @@ export function toPrice(
 ): Price {
   return {
     local,
-    cny: new MoneyDecimal(local)
-      .times(usdToCny)
-      .dividedBy(unitsPerUsd)
+    cny: convertToCny(local, unitsPerUsd, usdToCny)
       .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
       .toNumber(),
   };
@@ -31,7 +38,7 @@ export function billingMonths(
   return period === "P1Y" || (!period && description.includes("年付")) ? 12 : 1;
 }
 
-export function introPrice(quote: Pick<Quote, "intro" | "renewal">): Price {
+export function introPrice<T>(quote: { intro: T | null; renewal: T }): T {
   return quote.intro ?? quote.renewal;
 }
 
@@ -74,7 +81,7 @@ function priceTerms(
   const { local, months, introMonths, renewMonths, introTotal, renewTotal } =
     amounts;
   const converted = (amount: Decimal) =>
-    amount.times(usdToCny).div(unitsPerUsd).toNumber();
+    convertToCny(amount, unitsPerUsd, usdToCny).toNumber();
   return {
     prices: {
       intro: converted(local.intro.div(12)),
@@ -108,21 +115,17 @@ export function describeRawPrice(
 
 export type PriceTerms = ReturnType<typeof priceTerms>;
 
-export function createPricing(
-  data: Pick<Snapshot, "skus" | "exchangeRates" | "metadata">,
-) {
-  const skus = new Map(data.skus.map((sku) => [sku.id, sku]));
-  const rates = new Map(
-    data.exchangeRates.map(({ currency, unitsPerUsd }) => [
-      currency,
-      unitsPerUsd,
-    ]),
-  );
-  const usdToCny = data.metadata.usdToCny;
+export function createPricing(skuList: readonly Sku[], fx: Fx) {
+  const skus = new Map(skuList.map((sku) => [sku.id, sku]));
+  const rates = new Map(Object.entries(fx.rates));
+  const usdToCny = fx.rates.CNY.unitsPerUsd;
+  const rateFor = (currency: string) => {
+    const rate = rates.get(currency);
+    if (rate === undefined)
+      throw new Error(`Missing exchange rate for ${currency}`);
+    return rate.unitsPerUsd;
+  };
   const priceInputs = (quote: PricedQuote) => {
-    const unitsPerUsd = rates.get(quote.currency);
-    if (unitsPerUsd === undefined)
-      throw new Error(`Missing exchange rate for ${quote.currency}`);
     const sku = skus.get(quote.skuId);
     const months = billingMonths(sku?.billingPeriod, quote.description);
     const trialMonths = quote.intro?.local === 0 ? encodedOfferMonths(sku) : 0;
@@ -136,16 +139,26 @@ export function createPricing(
         months,
         introMonths,
       ),
-      unitsPerUsd,
+      unitsPerUsd: rateFor(quote.currency),
     };
   };
-  const converted = (amount: Decimal, unitsPerUsd: number) =>
-    amount.times(usdToCny).div(unitsPerUsd).toNumber();
   const monthlyCny = (amount: Decimal, unitsPerUsd: number) =>
-    converted(amount.div(12), unitsPerUsd);
+    convertToCny(amount.div(12), unitsPerUsd, usdToCny).toNumber();
   return {
     priceInputs,
     monthlyCny,
+    cnyPerLocal(currency: string) {
+      return convertToCny(1, rateFor(currency), usdToCny).toNumber();
+    },
+    withCny<T extends PricedQuote>(quote: T): WithCny<T> {
+      const { intro, renewal, ...rest } = quote;
+      const rate = rateFor(quote.currency);
+      return {
+        ...rest,
+        intro: intro && toPrice(intro.local, rate, usdToCny),
+        renewal: toPrice(renewal.local, rate, usdToCny),
+      };
+    },
     priceFor(quote: PricedQuote, view: PriceView): number {
       const { local, unitsPerUsd } = priceInputs(quote);
       return monthlyCny(local[view], unitsPerUsd);

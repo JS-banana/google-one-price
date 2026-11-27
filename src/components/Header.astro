@@ -1,6 +1,6 @@
 ---
 import { getMetadata } from "../lib/data";
-import { formatFixedRate, formatShanghaiTime } from "../lib/format";
+import { formatShanghaiTime } from "../lib/format";
 
 const nav = [
   { href: "/", label: "低价速查" },
@@ -14,7 +14,7 @@ const active = (href: string) =>
   href === path ||
   (href !== "/" && path.startsWith(`${href}/`)) ||
   (href === "/" && path.startsWith("/tiers/"));
-const { refreshedAt, usdToCny } = getMetadata();
+const { pricesObservedAt, fxDate, fxProvider } = getMetadata();
 ---
 
 <header class="site-header">
@@ -30,10 +30,15 @@ const { refreshedAt, usdToCny } = getMetadata();
       ))}
     </nav>
     <a href="/rates" class="header-meta mono small">
-      更新{" "}
-      <time datetime={`${refreshedAt}+08:00`}
-        >{formatShanghaiTime(refreshedAt, true)}</time
-      ><span class="desktop-meta"> · $1 = ¥{formatFixedRate(usdToCny)}</span>
+      <span
+        >价格观测时间
+        <time datetime={`${pricesObservedAt}+08:00`}
+          >{formatShanghaiTime(pricesObservedAt, true)}</time
+        ></span
+      >
+      <span
+        >汇率日期 <time datetime={fxDate}>{fxDate}</time> · {fxProvider}</span
+      >
     </a>
     <details class="mobile-nav">
       <summary aria-label="主导航菜单">
@@ -113,6 +118,7 @@ nav a:where(:hover, [aria-current]) {
   font-weight: 600;
 }
 .header-meta {
+  display: grid;
   margin-inline-start: auto;
   padding: 4px 7px;
   border: 1px solid var(--border-default);
@@ -134,8 +140,7 @@ nav a:where(:hover, [aria-current]) {
   .header-inner {
     gap: 10px;
   }
-  .desktop-nav,
-  .desktop-meta {
+  .desktop-nav {
     display: none;
   }
   .mobile-nav {

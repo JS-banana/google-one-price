@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { describeRawPrice } from "./data/money";
 import {
   formatCny,
-  formatFixedRate,
   formatLocal,
   formatMultiplier,
   formatRate,
@@ -31,7 +30,6 @@ describe("number and time formatting", () => {
     expect(formatRelative(0.0001)).toBe("<1%");
     expect(formatRelative(0.005)).toBe("+1%");
     expect(formatRelative(null)).toBe("·");
-    expect(formatFixedRate(6.674963)).toBe("6.675");
     expect(formatRate(0.0000037899129)).toBe("0.000003789913");
   });
 

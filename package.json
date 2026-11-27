@@ -18,7 +18,8 @@
     "format": "biome format --write .",
     "test": "vitest run",
     "data:import": "node scripts/data.ts import",
-    "data:check": "node scripts/data.ts check"
+    "data:check": "node scripts/data.ts check",
+    "fx:update": "node scripts/fx.ts"
   },
   "dependencies": {
     "@astrojs/preact": "6.1.6",

@@ -33,13 +33,14 @@ pnpm build
 3. 对同一文件运行 `pnpm data:check data/source/prices.xlsx`，检查快照 diff。
 4. 运行 `pnpm test` 和 `pnpm build`，提交快照并更新 `main`。`main` 上的 CI 通过后自动部署。
 
-CI 直接读取已提交的快照。工作簿结构和对账口径见[数据源说明](docs/data-source.md)。
+工作簿提供原币价格和观测时间。构建时使用 [Frankfurter](https://frankfurter.dev/) v2 混合参考汇率折算人民币，页面单独显示汇率日期。本地构建与 CI 使用已提交的汇率基线。每天定时部署和 `main` 部署都会尝试拉取最新汇率，失败时使用基线。可用 `pnpm fx:update` 更新基线。[数据源说明](docs/data-source.md)
 
 ## 项目结构
 
 ```text
 scripts/                 工作簿导入和对账
 src/data/snapshot.json   规范化价格快照
+src/data/fx.json         Frankfurter 汇率基线
 src/lib/data/            数据结构、价格计算和页面数据
 src/pages/               Astro 静态路由
 public/                  国旗、字体和其他静态资源

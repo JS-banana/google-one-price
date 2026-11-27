@@ -1,5 +1,10 @@
 import { Decimal } from "decimal.js";
-import { billingMonths, createPricing, encodedOfferMonths } from "./money.ts";
+import {
+  billingMonths,
+  encodedOfferMonths,
+  type PricedQuote,
+  type PriceTerms,
+} from "./money.ts";
 import type { Country, Quote, Sku, Snapshot } from "./schema.ts";
 import type { PriceView } from "./views.ts";
 
@@ -36,8 +41,10 @@ export function hasHistoricalPriceAnomaly(
   );
 }
 
-export function summarizeFreeTrials(data: Snapshot) {
-  const { describePrice } = createPricing(data);
+export function summarizeFreeTrials(
+  data: Pick<Snapshot, "countries" | "quotes">,
+  describePrice: (quote: PricedQuote) => PriceTerms,
+) {
   const countries = new Map(
     data.countries.map((country) => [country.code, country]),
   );

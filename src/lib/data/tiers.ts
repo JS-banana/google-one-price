@@ -1,6 +1,6 @@
-import { createPricing } from "./money.ts";
+import type { createPricing } from "./money.ts";
 import { isUsdMarket } from "./offers.ts";
-import type { Country, Quote, Snapshot } from "./schema.ts";
+import type { Country, Quote } from "./schema.ts";
 import type { PriceView } from "./views.ts";
 
 export const productLines = {
@@ -179,19 +179,20 @@ export const tierGroups = (Object.keys(productLines) as ProductLine[]).map(
   }),
 );
 
-export function tierQuotes(data: Snapshot, tierId: TierId): Quote[] {
-  return data.quotes.filter((quote) => quoteTier(quote) === tierId);
+export function tierQuotes(quotes: readonly Quote[], tierId: TierId): Quote[] {
+  return quotes.filter((quote) => quoteTier(quote) === tierId);
 }
 
 export function rankTier(
-  data: Snapshot,
+  quotes: readonly Quote[],
+  pricing: Pick<ReturnType<typeof createPricing>, "priceInputs" | "monthlyCny">,
   tierId: TierId,
   view: PriceView = "year",
 ): RankedQuote[] {
   const priority = new Map<string, number>(
     tiers[tierId].skus.map((id, index) => [id, index]),
   );
-  const { priceInputs, monthlyCny } = createPricing(data);
+  const { priceInputs, monthlyCny } = pricing;
   const best = new Map<string, Entry>();
   type Entry = ReturnType<typeof priceInputs> & { quote: Quote };
   const compare = (a: Entry, b: Entry) => {
@@ -210,7 +211,7 @@ export function rankTier(
     );
   };
 
-  for (const quote of tierQuotes(data, tierId)) {
+  for (const quote of tierQuotes(quotes, tierId)) {
     const entry = { quote, ...priceInputs(quote) };
     const current = best.get(quote.countryCode);
     if (!current || compare(entry, current) < 0)

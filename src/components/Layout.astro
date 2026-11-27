@@ -1,6 +1,6 @@
 ---
 import controls from "../lib/controls.js?raw";
-import { getMetadata } from "../lib/data";
+import { fxProviderUrl, getMetadata } from "../lib/data";
 import "../styles/global.css";
 import "../styles/prices.css";
 import Footer from "./Footer.astro";
@@ -27,6 +27,7 @@ const site = Astro.site;
 if (!site) throw new Error("Set the site URL in astro.config.mjs");
 const canonical = new URL(Astro.url.pathname.replace(/\/$/, "") || "/", site);
 const og = new URL("/og.png", site);
+const { pricesObservedAt, fxDate, fxProvider } = getMetadata();
 const jsonLd = [
   {
     "@type": "WebSite",
@@ -41,7 +42,13 @@ const jsonLd = [
           "@type": "Dataset",
           name: "Google One / Gemini iOS App Store 跨区订阅价格",
           description,
-          dateModified: `${getMetadata().refreshedAt}+08:00`,
+          temporalCoverage: `${pricesObservedAt}+08:00`,
+          isBasedOn: {
+            "@type": "Dataset",
+            name: `${fxProvider} 汇率`,
+            temporalCoverage: fxDate,
+            url: fxProviderUrl,
+          },
           creator: { "@type": "Organization", name: "G1 价目", url: site },
           license: new URL("/rates#data-license", site),
           variableMeasured: [

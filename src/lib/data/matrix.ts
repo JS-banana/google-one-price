@@ -1,4 +1,4 @@
-import type { Country, Quote, Snapshot } from "./schema.ts";
+import type { Country, LocalQuote, Quote } from "./schema.ts";
 
 export const matrixColumns = [
   { label: "30TB(com.one)", skuId: "com.google.one.30tb.m" },
@@ -22,12 +22,14 @@ export const matrixColumns = [
 ] as const;
 
 export type MatrixSkuId = (typeof matrixColumns)[number]["skuId"];
-export type Matrix = {
+export type Matrix<Q = Quote> = {
   columns: typeof matrixColumns;
-  rows: { country: Country; quotes: ReadonlyMap<MatrixSkuId, Quote | null> }[];
+  rows: { country: Country; quotes: ReadonlyMap<MatrixSkuId, Q | null> }[];
 };
 
-export function activeQuoteIndex(data: Snapshot): ReadonlyMap<string, Quote> {
+export function activeQuoteIndex<Q extends LocalQuote>(data: {
+  quotes: readonly Q[];
+}): ReadonlyMap<string, Q> {
   return new Map(
     data.quotes
       .filter((quote) => quote.status === "active")
@@ -35,7 +37,10 @@ export function activeQuoteIndex(data: Snapshot): ReadonlyMap<string, Quote> {
   );
 }
 
-export function buildMatrix(data: Snapshot): Matrix {
+export function buildMatrix<Q extends LocalQuote>(data: {
+  countries: readonly Country[];
+  quotes: readonly Q[];
+}): Matrix<Q> {
   const quotes = activeQuoteIndex(data);
   return {
     columns: matrixColumns,

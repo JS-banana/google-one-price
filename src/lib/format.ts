@@ -5,10 +5,6 @@ const fixed = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 const integer = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-const fixedRate = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 3,
-  maximumFractionDigits: 3,
-});
 const rate = new Intl.NumberFormat("en-US", { maximumSignificantDigits: 7 });
 const tenths = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 1,
@@ -31,10 +27,6 @@ export function formatLocalNumber(amount: number): string {
 
 export function formatLocal(amount: number, currency: string): string {
   return `${formatLocalNumber(amount)} ${currency}`;
-}
-
-export function formatFixedRate(value: number): string {
-  return fixedRate.format(value);
 }
 
 export function formatRate(value: number): string {
